@@ -31,3 +31,19 @@ The project journey is: create a project, configure a launch and reputation rule
 - Public browsing requires no login.
 - Deposits, token purchases, auction bids, claims, and other participation actions require Blux authentication.
 - Blux supplies the wallet and social login flow and yields a Stellar G-address for the authenticated user.
+- X is the user's public social profile. GitHub and GitLab contribute a developer signal. If one of those providers is the login method, its optional connection step is already complete.
+- Optional account connections may be skipped and managed later in Settings.
+- The current frontend prototype may simulate post-login OAuth connections and scores because production OAuth linking requires backend support.
+- Reputation is category-based and explainable, not a single opaque investment rating.
+- External identity connections are optional and user-controlled.
+- The platform does not provide investment recommendations, predict prices, or promise returns.
+- Launch and reputation values in the current frontend are illustrative mock data, not factual performance claims.
+- The product uses React, TypeScript, Vite, and `@bluxcc/react`.
+
+## Brand Commitments
+
+- Product working name: Launchpad.
+- The interface is minimal and uses a white background throughout.
+- Copy should be direct, factual, and transparent about eligibility, contracts, and illustrative data.
+
+## Evidence on Hand
