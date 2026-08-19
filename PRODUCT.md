@@ -47,3 +47,19 @@ The project journey is: create a project, configure a launch and reputation rule
 - Copy should be direct, factual, and transparent about eligibility, contracts, and illustrative data.
 
 ## Evidence on Hand
+
+- Product and infrastructure brief: `/Users/matin/.codex/attachments/acee568d-f307-4e94-9f86-01b32d78c4ad/Pasted text.txt`.
+- Page map and end-to-end user flows: `/Users/matin/.codex/attachments/cd080b00-59c2-4bbc-a463-74e279a4fef0/Pasted text.txt`.
+- No production project logos, token data, testimonials, audits, or metrics were supplied; the interface must label authored content as illustrative.
+
+## Product Principles
+
+- Let anyone investigate before asking them to authenticate.
+- Ask for identity only at the point of meaningful participation.
+- Make reputation legible by showing the signals and requirements behind it.
+- Keep optional identity connections genuinely optional and reversible.
+- Present factual project data without implying financial endorsement.
+
+## Accessibility & Inclusion
+
+The web interface must remain keyboard navigable, use visible focus states, preserve readable contrast, and support reduced motion. Authentication and participation states must not rely on color alone.
