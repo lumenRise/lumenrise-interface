@@ -202,3 +202,71 @@ The system is flat by default and uses no resting shadow on content surfaces, na
 
 ## Shapes
 
+Large surfaces remain square and continuous. Gently rounded corners belong to buttons, account controls, search fields, summary panels, and inline notices; smaller six- and seven-pixel corners are reserved for compact scores and quiet navigation states. Pills identify filters, statuses, progress tracks, meters, and switches. Circular marks are used for project symbols and identity icons.
+
+Borders are hairline and structural. A graphite top rule introduces a ledger or major panel, while cool gray rules separate repeated rows. Clipping is functional—progress fills and toggle tracks inherit their enclosing pill—not ornamental.
+
+**The Radius Has a Job Rule.** Round controls and state objects for affordance; do not round full-page sections or turn ledger rows into cards.
+
+## Components
+
+### Buttons
+
+Buttons are compact, confident controls with gently rounded corners and dense Manrope labels.
+
+- **Shape:** Controls use the shared control radius and a 40px minimum height; large flow actions rise to 48px.
+- **Primary:** Cobalt field, white label, and a matching border. Hover deepens the cobalt and lifts by one pixel; active returns to the baseline.
+- **Hover / Focus:** State transitions are crisp and short. Keyboard focus uses the global cobalt outline with visible offset.
+- **Secondary:** White field with the stronger ledger border; hover shifts to Paper Soft and a slightly darker stroke.
+- **Text:** Cobalt, underlined with a deliberate offset, and reserved for low-weight navigation or reversible actions.
+
+### Chips
+
+Chips are data-bearing, not decorative.
+
+- **Style:** Filter and status chips use pill geometry; score chips use a smaller compact radius. Fill and foreground always work as a semantic pair.
+- **State:** Selected filters invert to cobalt with white type; live and upcoming statuses retain both text and tonal cues so meaning never depends on color alone.
+
+### Cards / Containers
+
+Containers read as ledger sections rather than cards.
+
+- **Corner Style:** Major content regions stay square; only compact summaries and notices use the panel radius.
+- **Background:** Paper is standard, with Paper Soft or Cobalt Wash used for contained explanations and small calls to action.
+- **Shadow Strategy:** Flat at rest; rely on rules and tonal contrast.
+- **Border:** A graphite top rule opens a major data block, followed by cool gray row dividers.
+- **Internal Padding:** Dense rows use compact vertical padding; standalone summaries receive moderate inset padding.
+
+### Inputs / Fields
+
+Fields are quiet white controls with a thin ledger border and the shared control radius.
+
+- **Style:** Search combines a simple line icon, muted placeholder, and a 40px input in one bordered field.
+- **Focus:** The border becomes cobalt and a translucent two-pixel cobalt halo makes keyboard and text focus unmistakable.
+- **Error / Disabled:** Disabled controls use cool gray text and fill, and retain their label so state is not communicated by opacity alone.
+
+### Navigation
+
+Primary navigation is centered in the masthead and uses restrained Manrope labels. Inactive links are muted; hover and active states return to Graphite Ink, while the active destination receives a thin cobalt rule at the masthead edge. On smaller screens the links move to a horizontally scrollable second row rather than collapsing behind an icon.
+
+### Launch Ledger Row
+
+The signature row combines a circular project mark, semantic status, editorial project title, tabular financial progress, time, allocation, eligibility, participation count, and a clear action. Every repeated fact owns a stable column on wide screens. At narrow widths, explicit uppercase field labels appear above each value, preserving the audit trail when the table becomes a record.
+
+## Do's and Don'ts
+
+### Do:
+
+- **Do** begin major directories and panels with a graphite top rule, then divide repeated records with cool gray hairlines.
+- **Do** keep cobalt scarce and attach it to an action, focus target, active state, or live measure.
+- **Do** use Newsreader for editorial consequence and Manrope for exact interface language.
+- **Do** preserve clear field labels when dense desktop grids reflow on smaller screens.
+- **Do** honor reduced-motion preferences and keep keyboard focus visibly cobalt.
+
+### Don't:
+
+- **Don't** replace comparable ledger rows with a grid of floating rounded cards.
+- **Don't** add gradients, glass effects, ambient shadows, or ornamental crypto-dashboard glow.
+- **Don't** use status color without a text label or other explicit state cue.
+- **Don't** place large serif type inside dense controls, table labels, or repeated numeric data.
+- **Don't** fill the white canvas with tinted sections when a rule and spacing can establish hierarchy.
