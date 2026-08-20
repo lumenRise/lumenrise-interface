@@ -134,3 +134,71 @@ The palette is a paper-and-ink neutral field with one decisive cobalt voice and 
 
 - **Cobalt Action:** Use for primary actions, active navigation rules, selected filters, progress fills, focus outlines, and high-signal links.
 - **Cobalt Deep:** Use for hover states and readable foreground text on Cobalt Wash.
+- **Cobalt Wash:** Use as a quiet background for eligibility, score, selected-setting, and informational affordances.
+
+### Secondary
+
+- **Live Mint / Live Mint Ink:** Pair only for positive live or connected states; never use mint as a generic decorative accent.
+- **Upcoming Amber / Upcoming Amber Ink:** Pair for pending and upcoming status where the distinction must remain legible without urgency.
+
+### Neutral
+
+- **Paper:** The universal page and control surface.
+- **Graphite Ink:** The default text, strong rule, and icon color.
+- **Slate Muted:** Supporting copy, metadata, and inactive navigation.
+- **Slate Faint:** Column labels and tertiary annotations that remain readable.
+- **Ledger Line / Ledger Line Strong:** Row divisions, section boundaries, field borders, and secondary-control outlines.
+- **Paper Soft:** Quiet state fills, icon grounds, and low-emphasis explanatory notes.
+
+### Named Rules
+
+**The One Cobalt Voice Rule.** Cobalt identifies an action, active state, focus target, or live measure; it is not page decoration.
+
+**The Paper Is the Surface Rule.** Keep the product on white; introduce separation with rules and spacing before adding a tinted container.
+
+## Typography
+
+**Display Font:** Newsreader Variable (with Georgia and serif fallbacks)  
+**Body Font:** Manrope Variable (with sans-serif fallback)
+
+**Character:** Newsreader makes project names and page openings feel published rather than promoted. Manrope carries interface copy, numerals, and controls with deliberate neutrality; tabular numerals keep repeated values aligned.
+
+### Hierarchy
+
+- **Display:** Fluid, large, tightly led, and lightly weighted; reserve it for the first contextual statement on a surface.
+- **Headline:** Editorial section headings and prominent summaries, compact enough to sit beside data.
+- **Title:** Project and row titles that need distinction without interrupting scan rhythm.
+- **Body:** Direct explanatory copy and control text; introductory paragraphs stay comfortably narrow and use a more generous line height.
+- **Label:** Small, bold, tracked, and usually uppercase for table heads, status language, and compact metadata.
+
+### Named Rules
+
+**The Two Registers Rule.** Newsreader carries names, propositions, and summaries; Manrope carries instructions, controls, labels, and facts.
+
+**The Data Must Line Up Rule.** Use tabular numerals wherever amounts, percentages, dates, participant counts, or scores repeat in a row or column.
+
+## Layout
+
+The principal canvas is centered at a maximum width of 1540px with 42px desktop gutters, reducing to 28px below 1180px and 20px below 600px. A 72px masthead uses a three-part grid—wordmark, centered navigation, and account action—before becoming a two-row header below 860px.
+
+Discovery is a ruled ledger. Its desktop directory uses seven stable columns and rows with a 130px minimum height; the participant column drops at intermediate widths, then the ledger becomes a labeled two-column record below 860px and a single-column record below 600px. Other dense surfaces use the same logic: summary strips, settings sections, connection rows, and portfolio activity are grids divided by rules, not collections of floating cards.
+
+Spacing alternates between compact internal rhythms and generous orientation zones. Controls and metadata cluster tightly; page introductions, dashboard column changes, and major section transitions use broad breathing room. Responsive changes preserve information order and move actions below their data rather than compressing text past readability.
+
+**The Row Before Card Rule.** When several objects share comparable facts, use aligned rows and dividing rules before considering a card grid.
+
+## Elevation & Depth
+
+The system is flat by default and uses no resting shadow on content surfaces, navigation, rows, or standard controls. Depth comes from strong and soft rules, white-to-soft tonal shifts, and occasional inset grouping. Shadows are reserved for the transient toast and the physical thumb of a toggle; focus uses a cobalt outline or halo rather than elevation.
+
+### Shadow Vocabulary
+
+- **Toast Overlay:** A broad, low-opacity shadow separates temporary feedback from the ledger beneath it.
+- **Toggle Thumb:** A compact shadow makes the movable thumb legible against its track.
+
+### Named Rules
+
+**The Flat Ledger Rule.** Never use a shadow to make ordinary content look important; use hierarchy, rules, and spacing.
+
+## Shapes
+
