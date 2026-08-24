@@ -1,0 +1,14 @@
+{
+  "name": "interface",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@bluxcc/react": "^0.3.7",
+    "@fontsource-variable/manrope": "^5.3.0",
