@@ -13,3 +13,17 @@
       "grid": "A1:J2",
       "note": "Editorial display title, supporting copy, and product principles"
     },
+    {
+      "id": "directory-controls",
+      "kind": "control",
+      "grid": "A3:J3",
+      "note": "Launch status filters and search"
+    },
+    {
+      "id": "launch-list",
+      "kind": "control",
+      "grid": "A4:J9",
+      "note": "Dense launch records with progress, rules, eligibility, and gated actions"
+    }
+  ]
+}
