@@ -1,0 +1,15 @@
+{
+  "allowUncovered": true,
+  "regions": [
+    {
+      "id": "header",
+      "kind": "chrome",
+      "grid": "A0:J0",
+      "note": "Wordmark, primary navigation, and Blux login action"
+    },
+    {
+      "id": "hero",
+      "kind": "text",
+      "grid": "A1:J2",
+      "note": "Editorial display title, supporting copy, and product principles"
+    },
