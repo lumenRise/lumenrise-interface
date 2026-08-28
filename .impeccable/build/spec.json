@@ -1,0 +1,84 @@
+{
+  "tool": "comp-spec",
+  "version": 1,
+  "createdAt": "2026-09-22T06:32:34.935Z",
+  "comp": ".impeccable/mocks/approved/discover.png",
+  "warnings": [],
+  "uncoveredInkCells": [],
+  "compSize": {
+    "width": 1487,
+    "height": 1058
+  },
+  "aspect": 1.4055,
+  "orientation": "landscape",
+  "palette": [
+    {
+      "hex": "#f7f7f8",
+      "coverage": 0.9532
+    },
+    {
+      "hex": "#c1c1c7",
+      "coverage": 0.0142
+    },
+    {
+      "hex": "#8f8f98",
+      "coverage": 0.0116
+    },
+    {
+      "hex": "#0859e6",
+      "coverage": 0.011
+    },
+    {
+      "hex": "#0b0b0e",
+      "coverage": 0.01
+    }
+  ],
+  "bands": [
+    {
+      "y": 0.022,
+      "strength": 0.2125
+    },
+    {
+      "y": 0.044,
+      "strength": 0.24
+    },
+    {
+      "y": 0.1538,
+      "strength": 0.3289
+    },
+    {
+      "y": 0.1978,
+      "strength": 0.5412
+    },
+    {
+      "y": 0.2418,
+      "strength": 0.3102
+    },
+    {
+      "y": 0.4286,
+      "strength": 0.2848
+    },
+    {
+      "y": 0.5714,
+      "strength": 0.3136
+    },
+    {
+      "y": 0.6813,
+      "strength": 0.2739
+    },
+    {
+      "y": 0.8132,
+      "strength": 0.2032
+    },
+    {
+      "y": 0.9011,
+      "strength": 0.2099
+    }
+  ],
+  "regions": [
+    {
+      "id": "header",
+      "kind": "chrome",
+      "note": "Wordmark, primary navigation, and Blux login action",
+      "grid": "A0:J0",
+      "box": {
