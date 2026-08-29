@@ -1,0 +1,45 @@
+{
+  "tool": "build-phase",
+  "version": 2,
+  "startedAt": "2026-09-22T06:32:10.605Z",
+  "comp": ".impeccable/mocks/approved/discover.png",
+  "direction": "74c589df",
+  "breakpoint": "1487x1058",
+  "artifact": null,
+  "phase": "hero",
+  "phases": {
+    "comps": {
+      "status": "skipped",
+      "openedAt": null,
+      "closedAt": null,
+      "attempts": 0,
+      "notes": [
+        {
+          "at": "2026-09-22T06:32:10.605Z",
+          "text": "started with an approved comp; the comp round happened before this state (surface round or manual)"
+        }
+      ],
+      "gate": null,
+      "forced": null
+    },
+    "spec": {
+      "status": "closed",
+      "openedAt": "2026-09-22T06:32:10.604Z",
+      "closedAt": "2026-09-22T06:33:02.314Z",
+      "attempts": 2,
+      "notes": [],
+      "gate": {
+        "ok": true,
+        "reasons": [],
+        "summary": "4 regions, 0 plates, 1 text regions measured",
+        "at": "2026-09-22T06:33:02.314Z"
+      },
+      "forced": null
+    },
+    "plates": {
+      "status": "closed",
+      "openedAt": "2026-09-22T06:33:02.314Z",
+      "closedAt": "2026-09-22T06:33:07.465Z",
+      "attempts": 1,
+      "notes": [],
+      "gate": {
