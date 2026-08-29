@@ -165,3 +165,86 @@
           "coverage": 0.0246
         },
         {
+          "hex": "#353538",
+          "coverage": 0.0091
+        }
+      ],
+      "detail": {
+        "energy": 51.5287
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 9,
+          "capHeightPx": 63.6,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.6527,
+          "advTall": 1.0144,
+          "advX": 0.5976,
+          "gap": 0.0393,
+          "xRatio": 0.681,
+          "stemW": 0.1347,
+          "contrast": 1.678,
+          "serif": 1.9615,
+          "densTall": 0.3399,
+          "densX": 0.4597,
+          "weight": 0.3399
+        },
+        "widthClass": "normal",
+        "weightClass": "light",
+        "chosen": {
+          "family": "GFS Didot",
+          "weight": 400,
+          "fontSizePx": 89,
+          "source": "index",
+          "fp": {
+            "lines": 1,
+            "glyphs": 12,
+            "capHeightPx": 63.3,
+            "inkIsDark": true,
+            "allCaps": false,
+            "advance": 0.6323,
+            "advTall": 0.822,
+            "advX": 0.6086,
+            "gap": 0.0632,
+            "xRatio": 0.668,
+            "stemW": 0.1267,
+            "contrast": 1.7046,
+            "serif": 2.823,
+            "densTall": 0.3537,
+            "densX": 0.4259,
+            "weight": 0.3537
+          },
+          "stamp": "11815e2d1db2"
+        }
+      }
+    },
+    {
+      "id": "directory-controls",
+      "kind": "control",
+      "note": "Launch status filters and search",
+      "grid": "A3:J3",
+      "coverBox": {
+        "x": 0,
+        "y": 0.3,
+        "w": 1,
+        "h": 0.1
+      },
+      "box": {
+        "x": 0.0242,
+        "y": 0.2996,
+        "w": 0.0807,
+        "h": 0.0454
+      },
+      "px": {
+        "x": 36,
+        "y": 317,
+        "w": 120,
+        "h": 48
+      },
+      "aspect": 2.5,
+      "palette": [
