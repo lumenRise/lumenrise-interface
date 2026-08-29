@@ -248,3 +248,86 @@
       },
       "aspect": 2.5,
       "palette": [
+        {
+          "hex": "#0858e6",
+          "coverage": 0.5403
+        },
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.4044
+        },
+        {
+          "hex": "#5797ed",
+          "coverage": 0.0221
+        },
+        {
+          "hex": "#2577e8",
+          "coverage": 0.0174
+        },
+        {
+          "hex": "#b6d5f8",
+          "coverage": 0.0158
+        }
+      ],
+      "detail": {
+        "energy": 16.7414
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "launch-list",
+      "kind": "control",
+      "note": "Dense launch records with progress, rules, eligibility, and gated actions",
+      "grid": "A4:J9",
+      "coverBox": {
+        "x": 0,
+        "y": 0.4,
+        "w": 1,
+        "h": 0.6
+      },
+      "box": {
+        "x": 0.0175,
+        "y": 0.4093,
+        "w": 0.2125,
+        "h": 0.586
+      },
+      "px": {
+        "x": 26,
+        "y": 433,
+        "w": 316,
+        "h": 620
+      },
+      "aspect": 0.5097,
+      "palette": [
+        {
+          "hex": "#f7f7f7",
+          "coverage": 0.9204
+        },
+        {
+          "hex": "#b1b2b5",
+          "coverage": 0.0313
+        },
+        {
+          "hex": "#13141b",
+          "coverage": 0.0245
+        },
+        {
+          "hex": "#85868e",
+          "coverage": 0.0166
+        },
+        {
+          "hex": "#505050",
+          "coverage": 0.0072
+        }
+      ],
+      "detail": {
+        "energy": 23.2916
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    }
+  ]
+}
