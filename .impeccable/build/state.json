@@ -88,3 +88,48 @@
               "paletteMatch": 0.3996,
               "detail": 0,
               "detailRaw": 0.0051,
+              "detailAdded": 0.125,
+              "bands": 0
+            },
+            "file": ".impeccable/review/diff/hero/regions/directory-controls.png"
+          },
+          {
+            "id": "hero",
+            "verdict": "drift",
+            "score": {
+              "overall": 0.6008,
+              "structure": 0.5303,
+              "color": 0.9355,
+              "colorIntersection": 0.8848,
+              "paletteMatch": 0.9628,
+              "detail": 0.3721,
+              "detailRaw": 0.4658,
+              "detailAdded": 0.1875,
+              "bands": 0.46
+            },
+            "file": ".impeccable/review/diff/hero/regions/hero.png"
+          },
+          {
+            "id": "launch-list",
+            "verdict": "drift",
+            "score": {
+              "overall": 0.6706,
+              "structure": 0.6026,
+              "color": 0.9528,
+              "colorIntersection": 0.9115,
+              "paletteMatch": 0.9751,
+              "detail": 0.3295,
+              "detailRaw": 0.392,
+              "detailAdded": 0.125,
+              "bands": 0.7549
+            },
+            "file": ".impeccable/review/diff/hero/regions/launch-list.png"
+          }
+        ],
+        "regionVerdicts": {
+          "header": "drift",
+          "hero": "drift",
+          "directory-controls": "missing",
+          "launch-list": "drift"
+        },
+        "at": "2026-09-22T06:36:21.761Z"
