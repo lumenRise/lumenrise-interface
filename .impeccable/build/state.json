@@ -43,3 +43,48 @@
       "attempts": 1,
       "notes": [],
       "gate": {
+        "ok": true,
+        "reasons": [],
+        "summary": "no plates owed",
+        "at": "2026-09-22T06:33:07.465Z"
+      },
+      "forced": null
+    },
+    "hero": {
+      "status": "open",
+      "openedAt": "2026-09-22T06:33:07.465Z",
+      "closedAt": null,
+      "attempts": 4,
+      "notes": [],
+      "gate": {
+        "ok": false,
+        "reasons": [
+          "region directory-controls is missing (detail 0%, structure 48%): the comp shows material the build does not"
+        ],
+        "summary": "hero 73% (drift)",
+        "score": 0.7317,
+        "verdict": "drift",
+        "report": ".impeccable/review/diff/hero/report.json",
+        "sideBySide": "/Users/matin/Projects/launchpad/interface/.impeccable/review/diff/hero/side-by-side.png",
+        "worst": [
+          "directory-controls missing 35%",
+          "hero drift 60%",
+          "launch-list drift 67%"
+        ],
+        "worstIds": [
+          "directory-controls",
+          "hero",
+          "launch-list"
+        ],
+        "worstCrops": [
+          {
+            "id": "directory-controls",
+            "verdict": "missing",
+            "score": {
+              "overall": 0.3524,
+              "structure": 0.4812,
+              "color": 0.388,
+              "colorIntersection": 0.3667,
+              "paletteMatch": 0.3996,
+              "detail": 0,
+              "detailRaw": 0.0051,
