@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-22T06:50:14Z",
+  "title": "Design System: Launchpad",
+  "extensions": {
+    "colorMeta": {
+      "graphite-ink": {
+        "role": "neutral",
+        "displayName": "Graphite Ink",
+        "tonalRamp": [
+          "oklch(15% 0.018 260)",
+          "oklch(25% 0.018 260)",
+          "oklch(35% 0.018 260)",
+          "oklch(45% 0.018 260)",
+          "oklch(60% 0.018 260)",
+          "oklch(75% 0.018 260)",
+          "oklch(88% 0.018 260)",
+          "oklch(97% 0.018 260)"
+        ]
+      },
+      "slate-muted": {
+        "role": "neutral",
+        "displayName": "Slate Muted",
+        "tonalRamp": [
+          "oklch(15% 0.025 260)",
+          "oklch(25% 0.025 260)",
+          "oklch(35% 0.025 260)",
+          "oklch(45% 0.025 260)",
+          "oklch(60% 0.025 260)",
+          "oklch(75% 0.025 260)",
+          "oklch(88% 0.025 260)",
+          "oklch(97% 0.025 260)"
+        ]
+      },
+      "slate-faint": {
+        "role": "neutral",
+        "displayName": "Slate Faint",
+        "tonalRamp": [
+          "oklch(15% 0.022 260)",
+          "oklch(25% 0.022 260)",
+          "oklch(35% 0.022 260)",
+          "oklch(45% 0.022 260)",
+          "oklch(60% 0.022 260)",
+          "oklch(75% 0.022 260)",
+          "oklch(88% 0.022 260)",
+          "oklch(97% 0.022 260)"
+        ]
+      },
+      "ledger-line": {
+        "role": "neutral",
+        "displayName": "Ledger Line",
+        "tonalRamp": [
+          "oklch(15% 0.01 260)",
+          "oklch(25% 0.01 260)",
+          "oklch(35% 0.01 260)",
+          "oklch(45% 0.01 260)",
+          "oklch(60% 0.01 260)",
+          "oklch(75% 0.01 260)",
+          "oklch(88% 0.01 260)",
+          "oklch(97% 0.01 260)"
+        ]
+      },
+      "ledger-line-strong": {
+        "role": "neutral",
+        "displayName": "Ledger Line Strong",
+        "tonalRamp": [
+          "oklch(15% 0.012 260)",
+          "oklch(25% 0.012 260)",
+          "oklch(35% 0.012 260)",
+          "oklch(45% 0.012 260)",
+          "oklch(60% 0.012 260)",
+          "oklch(75% 0.012 260)",
+          "oklch(88% 0.012 260)",
+          "oklch(97% 0.012 260)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(25% 0 0)",
+          "oklch(35% 0 0)",
+          "oklch(45% 0 0)",
+          "oklch(60% 0 0)",
+          "oklch(75% 0 0)",
+          "oklch(88% 0 0)",
+          "oklch(97% 0 0)"
+        ]
+      },
+      "paper-soft": {
+        "role": "neutral",
+        "displayName": "Paper Soft",
+        "tonalRamp": [
+          "oklch(15% 0.008 260)",
+          "oklch(25% 0.008 260)",
+          "oklch(35% 0.008 260)",
+          "oklch(45% 0.008 260)",
+          "oklch(60% 0.008 260)",
