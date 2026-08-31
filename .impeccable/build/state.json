@@ -133,3 +133,48 @@
           "launch-list": "drift"
         },
         "at": "2026-09-22T06:36:21.761Z"
+      },
+      "forced": null,
+      "readingsSeen": {},
+      "records": 2
+    },
+    "sections": {
+      "status": "pending",
+      "openedAt": null,
+      "closedAt": null,
+      "attempts": 0,
+      "notes": [],
+      "gate": null,
+      "forced": null
+    },
+    "motion": {
+      "status": "pending",
+      "openedAt": null,
+      "closedAt": null,
+      "attempts": 0,
+      "notes": [],
+      "gate": null,
+      "forced": null
+    },
+    "responsive": {
+      "status": "pending",
+      "openedAt": null,
+      "closedAt": null,
+      "attempts": 0,
+      "notes": [],
+      "gate": null,
+      "forced": null
+    },
+    "review": {
+      "status": "pending",
+      "openedAt": null,
+      "closedAt": null,
+      "attempts": 0,
+      "notes": [],
+      "gate": null,
+      "forced": null
+    }
+  },
+  "finish": null,
+  "plates": {}
+}
