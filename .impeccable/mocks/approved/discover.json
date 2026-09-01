@@ -1,0 +1,20 @@
+{
+  "approved": true,
+  "approval": "delegated from the user's directive to build a minimal white interface",
+  "useCase": "ui-mockup",
+  "surface": "Discover",
+  "prompt": "High-fidelity desktop product UI for Launchpad: a white editorial public-offering ledger for Stellar launches, with serif-led hierarchy, crisp rules, restrained cobalt actions, filterable launch rows, eligibility signals, and no crypto clichés or promotional claims.",
+  "direction": "Editorial launch ledger",
+  "mustCarryForward": [
+    "white application canvas",
+    "serif display hierarchy",
+    "cobalt reserved for action and live state",
+    "dense launch rows divided by rules instead of floating cards",
+    "factual eligibility and allocation language"
+  ],
+  "doNotLiteralize": [
+    "generated text rendering",
+    "exact mock project dates",
+    "desktop-only proportions"
+  ]
+}
