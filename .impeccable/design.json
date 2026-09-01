@@ -295,3 +295,102 @@
     {
       "name": "Active Filter Chip",
       "kind": "chip",
+      "refersTo": "filter-chip-active",
+      "description": "The selected directory filter, pairing its label with a compact result count.",
+      "html": "<button class=\"ds-filter-chip\" type=\"button\" aria-pressed=\"true\">Live <span>2</span></button>",
+      "css": ".ds-filter-chip { display: inline-flex; align-items: center; gap: 8px; padding: 9px 12px; border: 0; border-radius: 999px; color: #fff; background: var(--blue, #1455ee); font: 650 12px/1.5 'Manrope Variable', sans-serif; cursor: pointer; transition: background-color 160ms ease, transform 160ms ease; } .ds-filter-chip span { min-width: 18px; height: 18px; display: inline-grid; place-items: center; border-radius: 999px; color: var(--blue, #1455ee); background: #fff; font-size: 10px; } .ds-filter-chip:hover { background: var(--blue-dark, #0d3eb8); transform: translateY(-1px); } .ds-filter-chip:active { transform: translateY(0); } .ds-filter-chip:focus-visible { outline: 2px solid var(--blue, #1455ee); outline-offset: 3px; }"
+    },
+    {
+      "name": "Live Status",
+      "kind": "chip",
+      "refersTo": "status-live",
+      "description": "A semantic status label that combines a mint tonal pair with explicit uppercase text.",
+      "html": "<span class=\"ds-status-live\">Live</span>",
+      "css": ".ds-status-live { width: max-content; min-height: 20px; padding: 3px 7px; display: inline-flex; align-items: center; border-radius: 999px; color: var(--mint-ink, #12613a); background: var(--mint, #d9f7e7); font: 780 9px/1.5 'Manrope Variable', sans-serif; letter-spacing: 0.07em; text-transform: uppercase; }"
+    },
+    {
+      "name": "Primary Navigation",
+      "kind": "nav",
+      "description": "A centered masthead navigation with muted links and a cobalt rule for the active destination.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Primary navigation\"><a class=\"ds-wordmark\" href=\"#\"><svg viewBox=\"0 0 28 28\" aria-hidden=\"true\"><path d=\"M14 2.5v23M2.5 14h23M5.8 5.8l16.4 16.4M22.2 5.8 5.8 22.2\"/><circle cx=\"14\" cy=\"14\" r=\"4.2\"/></svg><span>Launchpad</span></a><div class=\"ds-nav-links\"><a class=\"ds-nav-active\" href=\"#\">Discover</a><a href=\"#\">Reputation</a><a href=\"#\">Portfolio</a><a href=\"#\">Developers</a></div></nav>",
+      "css": ".ds-nav { min-height: 72px; display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 40px; padding: 0 24px; border-bottom: 1px solid var(--line, #dfe2e8); background: rgba(255, 255, 255, 0.96); } .ds-wordmark { display: inline-flex; align-items: center; gap: 11px; color: var(--ink, #111318); text-decoration: none; font: 650 25px/1 'Newsreader Variable', Georgia, serif; letter-spacing: -0.025em; } .ds-wordmark svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 1.35; } .ds-wordmark circle { fill: var(--paper, #fff); } .ds-nav-links { align-self: stretch; display: flex; justify-content: center; align-items: center; gap: 34px; } .ds-nav-links a { height: 100%; display: inline-flex; align-items: center; position: relative; color: var(--muted, #586171); text-decoration: none; font: 500 14px/1.5 'Manrope Variable', sans-serif; transition: color 160ms ease; } .ds-nav-links a:hover, .ds-nav-links a.ds-nav-active { color: var(--ink, #111318); } .ds-nav-links a.ds-nav-active::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--blue, #1455ee); } .ds-nav-links a:focus-visible, .ds-wordmark:focus-visible { outline: 2px solid var(--blue, #1455ee); outline-offset: 3px; }"
+    },
+    {
+      "name": "Launch Ledger Row",
+      "kind": "custom",
+      "refersTo": "launch-row",
+      "description": "The signature ruled record for project identity, progress, eligibility, and participation action.",
+      "html": "<article class=\"ds-launch-row\"><div class=\"ds-project\"><span class=\"ds-token-mark\"><svg viewBox=\"0 0 48 48\" aria-hidden=\"true\"><path d=\"M24 5v38M5 24h38M11 11l26 26M37 11 11 37\"/></svg></span><div><span class=\"ds-status\">Live</span><h3>Meridian</h3><p>MDR · Open finance rails for settlement.</p></div></div><div class=\"ds-metric\"><span>Raise progress</span><strong>$1.25M / $2M</strong><div class=\"ds-progress\"><i></i></div><small>63% committed</small></div><div class=\"ds-metric\"><span>Eligibility</span><strong class=\"ds-score\">Score 63+</strong><small>Log in to check</small></div><button class=\"ds-row-action\" type=\"button\">Participate</button></article>",
+      "css": ".ds-launch-row { min-height: 130px; display: grid; grid-template-columns: minmax(240px, 2fr) minmax(180px, 1.25fr) minmax(120px, 0.8fr) minmax(120px, 0.8fr); align-items: center; gap: 20px; padding: 16px 0; border-top: 1px solid var(--line, #dfe2e8); color: var(--ink, #111318); background: var(--paper, #fff); font-family: 'Manrope Variable', sans-serif; } .ds-project { display: flex; align-items: center; gap: 16px; min-width: 0; } .ds-token-mark { width: 50px; height: 50px; flex: 0 0 50px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: #171a23; } .ds-token-mark svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1.65; stroke-linecap: round; } .ds-status { display: inline-flex; padding: 3px 7px; border-radius: 999px; color: var(--mint-ink, #12613a); background: var(--mint, #d9f7e7); font: 780 9px/1.5 'Manrope Variable', sans-serif; letter-spacing: 0.07em; text-transform: uppercase; } .ds-project h3 { margin: 4px 0 0; font: 560 22px/1.05 'Newsreader Variable', Georgia, serif; letter-spacing: -0.02em; } .ds-project p { margin: 3px 0 0; color: var(--muted, #586171); font-size: 11px; } .ds-metric { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; font-variant-numeric: tabular-nums; } .ds-metric > span, .ds-metric small { color: var(--muted, #586171); font-size: 10px; } .ds-metric strong { margin-top: 3px; font-size: 12px; } .ds-progress { width: 100%; height: 5px; margin-top: 9px; overflow: hidden; border-radius: 999px; background: #e9ecf1; } .ds-progress i { width: 63%; height: 100%; display: block; border-radius: inherit; background: var(--blue, #1455ee); } .ds-metric small { margin-top: 7px; } .ds-score { padding: 5px 7px; border-radius: 6px; color: var(--blue-dark, #0d3eb8); background: var(--soft-blue, #edf3ff); } .ds-row-action { min-height: 40px; padding: 9px 12px; border: 1px solid var(--blue, #1455ee); border-radius: 10px; color: #fff; background: var(--blue, #1455ee); font: 690 13px/1.5 'Manrope Variable', sans-serif; cursor: pointer; transition: background-color 160ms ease, transform 160ms ease; } .ds-row-action:hover { background: var(--blue-dark, #0d3eb8); transform: translateY(-1px); } .ds-row-action:active { transform: translateY(0); } .ds-row-action:focus-visible { outline: 2px solid var(--blue, #1455ee); outline-offset: 3px; } @media (max-width: 720px) { .ds-launch-row { grid-template-columns: 1fr 1fr; } .ds-project, .ds-row-action { grid-column: 1 / -1; } }"
+    },
+    {
+      "name": "Toggle Switch",
+      "kind": "custom",
+      "description": "A compact privacy or notification switch with an explicit label and quiet physical thumb.",
+      "html": "<label class=\"ds-toggle-row\"><span><strong>Public reputation profile</strong><small>Let people find the signals you publish.</small></span><button class=\"ds-toggle ds-toggle-on\" type=\"button\" role=\"switch\" aria-checked=\"true\" aria-label=\"Public reputation profile\"><i></i></button></label>",
+      "css": ".ds-toggle-row { min-height: 70px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid var(--line, #dfe2e8); color: var(--ink, #111318); font-family: 'Manrope Variable', sans-serif; } .ds-toggle-row > span { flex: 1; display: flex; flex-direction: column; } .ds-toggle-row strong { font-size: 12px; } .ds-toggle-row small { margin-top: 3px; color: var(--muted, #586171); font-size: 10px; } .ds-toggle { width: 42px; height: 24px; flex: 0 0 auto; padding: 3px; border: 0; border-radius: 999px; background: #cdd2dc; cursor: pointer; transition: background-color 160ms ease; } .ds-toggle i { width: 18px; height: 18px; display: block; border-radius: 50%; background: #fff; box-shadow: 0 2px 5px rgba(17, 19, 24, 0.2); transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-toggle-on { background: var(--blue, #1455ee); } .ds-toggle-on i { transform: translateX(18px); } .ds-toggle:hover { background: var(--blue-dark, #0d3eb8); } .ds-toggle:active i { transform: translateX(17px) scale(0.96); } .ds-toggle:focus-visible { outline: 2px solid var(--blue, #1455ee); outline-offset: 3px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Public Offering Ledger",
+    "overview": "Launchpad should feel like a public record prepared for inspection: white paper, graphite type, exact data, and hairline rules that make every term easy to audit. Newsreader gives launches editorial consequence, while Manrope keeps amounts, requirements, and controls contemporary and precise. The result is institutional without becoming cold, and financial without borrowing the noise of a trading terminal.\n\nThe interface is compact where facts repeat and expansive where orientation matters. Large serif openings establish context; dense rows then disclose status, price, progress, timing, allocation, eligibility, and action in a stable reading order. Cobalt is scarce and purposeful, reserved for action, selection, focus, and live progress. Rounded treatments belong to controls and small status objects, never to large decorative shells.",
+    "keyCharacteristics": [
+      "White editorial canvas with graphite copy and hairline ledger rules.",
+      "Newsreader display type paired with Manrope for body copy and data.",
+      "Cobalt reserved for actions, focus, active state, and meaningful progress.",
+      "Compact, tabular rows in place of card-grid dashboards.",
+      "Restrained rounding, flat depth, and crisp state changes."
+    ],
+    "rules": [
+      {
+        "name": "The One Cobalt Voice Rule",
+        "body": "Cobalt identifies an action, active state, focus target, or live measure; it is not page decoration.",
+        "section": "colors"
+      },
+      {
+        "name": "The Paper Is the Surface Rule",
+        "body": "Keep the product on white; introduce separation with rules and spacing before adding a tinted container.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two Registers Rule",
+        "body": "Newsreader carries names, propositions, and summaries; Manrope carries instructions, controls, labels, and facts.",
+        "section": "typography"
+      },
+      {
+        "name": "The Data Must Line Up Rule",
+        "body": "Use tabular numerals wherever amounts, percentages, dates, participant counts, or scores repeat in a row or column.",
+        "section": "typography"
+      },
+      {
+        "name": "The Row Before Card Rule",
+        "body": "When several objects share comparable facts, use aligned rows and dividing rules before considering a card grid.",
+        "section": "layout"
+      },
+      {
+        "name": "The Flat Ledger Rule",
+        "body": "Never use a shadow to make ordinary content look important; use hierarchy, rules, and spacing.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Radius Has a Job Rule",
+        "body": "Round controls and state objects for affordance; do not round full-page sections or turn ledger rows into cards.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do begin major directories and panels with a graphite top rule, then divide repeated records with cool gray hairlines.",
+      "Do keep cobalt scarce and attach it to an action, focus target, active state, or live measure.",
+      "Do use Newsreader for editorial consequence and Manrope for exact interface language.",
+      "Do preserve clear field labels when dense desktop grids reflow on smaller screens.",
+      "Do honor reduced-motion preferences and keep keyboard focus visibly cobalt."
+    ],
+    "donts": [
+      "Don't replace comparable ledger rows with a grid of floating rounded cards.",
+      "Don't add gradients, glass effects, ambient shadows, or ornamental crypto-dashboard glow.",
+      "Don't use status color without a text label or other explicit state cue.",
+      "Don't place large serif type inside dense controls, table labels, or repeated numeric data.",
+      "Don't fill the white canvas with tinted sections when a rule and spacing can establish hierarchy."
+    ]
+  }
+}
