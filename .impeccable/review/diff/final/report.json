@@ -55,3 +55,60 @@
         "coverage": 0.965
       },
       {
+        "hex": "#1858e8",
+        "coverage": 0.0141
+      },
+      {
+        "hex": "#18181b",
+        "coverage": 0.009
+      },
+      {
+        "hex": "#9398a2",
+        "coverage": 0.0058
+      },
+      {
+        "hex": "#bababe",
+        "coverage": 0.0036
+      },
+      {
+        "hex": "#707080",
+        "coverage": 0.0026
+      }
+    ]
+  },
+  "regions": [
+    {
+      "id": "header",
+      "x": 0,
+      "y": 0,
+      "w": 1,
+      "h": 0.1,
+      "kind": "chrome",
+      "score": {
+        "overall": 0.711,
+        "structure": 0.95,
+        "color": 0.977,
+        "colorIntersection": 0.9454,
+        "paletteMatch": 0.994,
+        "detail": 0.5371,
+        "detailRaw": 0.5684,
+        "detailAdded": 0.0625,
+        "bands": 0
+      },
+      "verdict": "drift",
+      "inkBox": {
+        "comp": {
+          "x": 46,
+          "y": 12,
+          "w": 1398,
+          "h": 42
+        },
+        "build": {
+          "x": 44,
+          "y": 16,
+          "w": 1401,
+          "h": 56
+        }
+      }
+    },
+    {
