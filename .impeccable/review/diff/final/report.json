@@ -1,0 +1,57 @@
+{
+  "tool": "comp-diff",
+  "version": 1,
+  "createdAt": "2026-09-22T06:36:07.487Z",
+  "label": "hero-repro",
+  "comp": ".impeccable/mocks/approved/discover.png",
+  "build": ".impeccable/review/hero-repro.png",
+  "spec": ".impeccable/build/spec.json",
+  "compSize": "1487x1058",
+  "buildSize": "1487x1058",
+  "align": "top",
+  "overall": 0.7317,
+  "verdict": "drift",
+  "scores": {
+    "overall": 0.7317,
+    "structure": 0.5954,
+    "color": 0.9715,
+    "colorIntersection": 0.9413,
+    "paletteMatch": 0.9877,
+    "detail": 0.6249,
+    "detailRaw": 0.651,
+    "detailAdded": 0.0521,
+    "bands": 0.8282
+  },
+  "palette": {
+    "comp": [
+      {
+        "hex": "#f7f7f8",
+        "coverage": 0.9512
+      },
+      {
+        "hex": "#c1c1c7",
+        "coverage": 0.0141
+      },
+      {
+        "hex": "#8f8f98",
+        "coverage": 0.0116
+      },
+      {
+        "hex": "#0859e6",
+        "coverage": 0.011
+      },
+      {
+        "hex": "#0b0b0e",
+        "coverage": 0.01
+      },
+      {
+        "hex": "#63636a",
+        "coverage": 0.0021
+      }
+    ],
+    "build": [
+      {
+        "hex": "#f8f8f8",
+        "coverage": 0.965
+      },
+      {
