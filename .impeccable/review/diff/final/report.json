@@ -169,3 +169,59 @@
           "x": 0,
           "y": 0,
           "w": 120,
+          "h": 48
+        },
+        "build": {
+          "x": 6,
+          "y": 0,
+          "w": 114,
+          "h": 46
+        }
+      }
+    },
+    {
+      "id": "launch-list",
+      "x": 0.0175,
+      "y": 0.4093,
+      "w": 0.2125,
+      "h": 0.586,
+      "kind": "control",
+      "score": {
+        "overall": 0.6706,
+        "structure": 0.6026,
+        "color": 0.9528,
+        "colorIntersection": 0.9115,
+        "paletteMatch": 0.9751,
+        "detail": 0.3295,
+        "detailRaw": 0.392,
+        "detailAdded": 0.125,
+        "bands": 0.7549
+      },
+      "verdict": "drift",
+      "inkBox": {
+        "comp": {
+          "x": 21,
+          "y": 8,
+          "w": 282,
+          "h": 601
+        },
+        "build": {
+          "x": 16,
+          "y": 25,
+          "w": 295,
+          "h": 595
+        }
+      }
+    }
+  ],
+  "files": {
+    "sideBySide": "/Users/matin/Projects/launchpad/interface/.impeccable/review/diff/final/side-by-side.png",
+    "heatmap": "/Users/matin/Projects/launchpad/interface/.impeccable/review/diff/final/heatmap.png",
+    "regionFiles": [
+      "/Users/matin/Projects/launchpad/interface/.impeccable/review/diff/final/regions/header.png",
+      "/Users/matin/Projects/launchpad/interface/.impeccable/review/diff/final/regions/hero.png",
+      "/Users/matin/Projects/launchpad/interface/.impeccable/review/diff/final/regions/directory-controls.png",
+      "/Users/matin/Projects/launchpad/interface/.impeccable/review/diff/final/regions/launch-list.png"
+    ]
+  }
+}
