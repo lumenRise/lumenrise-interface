@@ -112,3 +112,60 @@
       }
     },
     {
+      "id": "hero",
+      "x": 0.0242,
+      "y": 0.1285,
+      "w": 0.5124,
+      "h": 0.1474,
+      "kind": "text",
+      "score": {
+        "overall": 0.6008,
+        "structure": 0.5303,
+        "color": 0.9355,
+        "colorIntersection": 0.8848,
+        "paletteMatch": 0.9628,
+        "detail": 0.3721,
+        "detailRaw": 0.4658,
+        "detailAdded": 0.1875,
+        "bands": 0.46
+      },
+      "verdict": "drift",
+      "inkBox": {
+        "comp": {
+          "x": 11,
+          "y": 8,
+          "w": 744,
+          "h": 142
+        },
+        "build": {
+          "x": 10,
+          "y": 0,
+          "w": 682,
+          "h": 156
+        }
+      }
+    },
+    {
+      "id": "directory-controls",
+      "x": 0.0242,
+      "y": 0.2996,
+      "w": 0.0807,
+      "h": 0.0454,
+      "kind": "control",
+      "score": {
+        "overall": 0.3524,
+        "structure": 0.4812,
+        "color": 0.388,
+        "colorIntersection": 0.3667,
+        "paletteMatch": 0.3996,
+        "detail": 0,
+        "detailRaw": 0.0051,
+        "detailAdded": 0.125,
+        "bands": 0
+      },
+      "verdict": "missing",
+      "inkBox": {
+        "comp": {
+          "x": 0,
+          "y": 0,
+          "w": 120,
