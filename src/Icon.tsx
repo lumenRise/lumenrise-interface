@@ -59,3 +59,23 @@ export function Icon({ name, size = 18, className }: IconProps) {
     return <svg {...common}><path d="M9 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4M16 17l5-5-5-5M21 12H9" /></svg>
   }
   if (name === 'search') {
+    return <svg {...common}><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
+  }
+  if (name === 'settings') {
+    return <svg {...common}><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.8 1.8 0 0 0 .4 2l.1.1-2.8 2.8-.1-.1a1.8 1.8 0 0 0-2-.4 1.8 1.8 0 0 0-1.1 1.7V21h-4v-.1A1.8 1.8 0 0 0 8.8 19a1.8 1.8 0 0 0-2 .4l-.1.1-2.8-2.8.1-.1a1.8 1.8 0 0 0 .4-2A1.8 1.8 0 0 0 2.7 14H2v-4h.7a1.8 1.8 0 0 0 1.7-1.1 1.8 1.8 0 0 0-.4-2l-.1-.1L6.7 4l.1.1a1.8 1.8 0 0 0 2 .4A1.8 1.8 0 0 0 10 2.8V2h4v.8a1.8 1.8 0 0 0 1.1 1.7 1.8 1.8 0 0 0 2-.4l.1-.1L20 6.8l-.1.1a1.8 1.8 0 0 0-.4 2 1.8 1.8 0 0 0 1.7 1.1h.8v4h-.8a1.8 1.8 0 0 0-1.8 1Z" /></svg>
+  }
+  if (name === 'shield') {
+    return <svg {...common}><path d="M12 22s8-3.8 8-10V5l-8-3-8 3v7c0 6.2 8 10 8 10Z" /><path d="m9 12 2 2 4-5" /></svg>
+  }
+  if (name === 'spark') {
+    return <svg {...common}><path d="M12 2 9.8 9.8 2 12l7.8 2.2L12 22l2.2-7.8L22 12l-7.8-2.2L12 2Z" /></svg>
+  }
+  if (name === 'wallet') {
+    return <svg {...common}><path d="M4 5h14a2 2 0 0 1 2 2v12H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" /><path d="M16 11h6v5h-6a2.5 2.5 0 0 1 0-5Z" /><path d="M5 5V3h12v2" /></svg>
+  }
+  if (name === 'x') {
+    return <svg {...common}><path d="M18 3h3l-6.6 7.5L22 21h-6l-4.7-6.1L6 21H3l6.9-7.9L2.6 3h6.2l4.2 5.6L18 3Z" /></svg>
+  }
+
+  return null
+}
