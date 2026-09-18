@@ -203,3 +203,207 @@ function App() {
   } else if (pathname === '/portfolio') {
     page = <PortfolioPage {...shared} />
   } else if (pathname === '/settings') {
+    page = <SettingsPage {...shared} />
+  } else if (pathname === '/' || pathname === '/launches') {
+    page = <DiscoverPage {...shared} />
+  } else {
+    page = <ComingSoonPage {...shared} />
+  }
+
+  return (
+    <div className="app-shell">
+      {page}
+      {notice && (
+        <div className="toast" role="status">
+          <span>{notice}</span>
+          <button type="button" aria-label="Dismiss message" onClick={() => setNotice(null)}>×</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+type SharedProps = {
+  path: string
+  isSignedIn: boolean
+  address?: string
+  loginPending: boolean
+  onLogin: (destination?: string) => Promise<void>
+  onLogout: () => void
+}
+
+function Header({ path, isSignedIn, address, loginPending, onLogin }: SharedProps) {
+  const nav = [
+    { label: 'Discover', to: '/' },
+    { label: 'Reputation', to: '/reputation' },
+    { label: 'Portfolio', to: '/portfolio' },
+    { label: 'Developers', to: '/developers' },
+  ]
+
+  return (
+    <header className="site-header">
+      <Logo />
+      <nav className="main-nav" aria-label="Primary navigation">
+        {nav.map((item) => (
+          <Link
+            key={item.to}
+            to={item.to}
+            className={path === item.to ? 'active' : undefined}
+            aria-current={path === item.to ? 'page' : undefined}
+          >
+            {item.label}
+          </Link>
+        ))}
+      </nav>
+      {isSignedIn ? (
+        <Link to="/settings" className="account-button" aria-label={`Account settings for ${shortAddress(address)}`}>
+          <span className="account-dot" />
+          <span>{shortAddress(address)}</span>
+          <Icon name="settings" size={16} />
+        </Link>
+      ) : (
+        <button className="button button-primary header-login" type="button" disabled={loginPending} onClick={() => void onLogin('/portfolio')}>
+          {loginPending ? 'Opening Blux…' : 'Log in'}
+        </button>
+      )}
+    </header>
+  )
+}
+
+function Footer() {
+  return (
+    <footer className="site-footer">
+      <div>
+        <Logo />
+        <p>Identity and launch infrastructure for Stellar.</p>
+      </div>
+      <div className="footer-links">
+        <Link to="/missions">Missions</Link>
+        <Link to="/create">Create launch</Link>
+        <Link to="/campaigns">Campaigns</Link>
+        <Link to="/explorer">Explorer</Link>
+        <Link to="/cli">CLI & agents</Link>
+      </div>
+      <p className="footnote">Illustrative product data · Built on Stellar</p>
+    </footer>
+  )
+}
+
+function DiscoverPage(props: SharedProps) {
+  const [filter, setFilter] = useState<'All' | LaunchStatus>('All')
+  const [query, setQuery] = useState('')
+  const filteredLaunches = useMemo(() => {
+    const normalized = query.trim().toLowerCase()
+    return launches.filter((launch) => {
+      const matchesFilter = filter === 'All' || launch.status === filter
+      const matchesSearch = !normalized || [launch.name, launch.symbol, launch.description, launch.allocation]
+        .join(' ')
+        .toLowerCase()
+        .includes(normalized)
+      return matchesFilter && matchesSearch
+    })
+  }, [filter, query])
+
+  return (
+    <>
+      <Header {...props} />
+      <main className="page discover-page">
+        <section className="discover-intro">
+          <div>
+            <h1>Open launches</h1>
+            <p className="lead">Review the rules, understand your eligibility, and choose whether to participate. No account needed to explore.</p>
+          </div>
+          <div className="intro-note" aria-label="Launchpad principles">
+            <span>Transparent rules</span>
+            <span>Verifiable eligibility</span>
+            <span>User-owned identity</span>
+          </div>
+        </section>
+
+        <section className="launch-directory" aria-labelledby="launch-directory-title">
+          <h2 id="launch-directory-title" className="sr-only">Launch directory</h2>
+          <div className="directory-tools">
+            <div className="filter-list" role="group" aria-label="Filter launches">
+              {filterLabels.map((label) => {
+                const count = label === 'All' ? launches.length : launches.filter((item) => item.status === label).length
+                return (
+                  <button
+                    key={label}
+                    type="button"
+                    className={filter === label ? 'active' : undefined}
+                    aria-pressed={filter === label}
+                    onClick={() => setFilter(label)}
+                  >
+                    {label}<span>{count}</span>
+                  </button>
+                )
+              })}
+            </div>
+            <label className="search-field">
+              <Icon name="search" size={17} />
+              <span className="sr-only">Search launches</span>
+              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search projects or tokens" />
+            </label>
+          </div>
+
+          <div className="launch-table">
+            <div className="launch-head" aria-hidden="true">
+              <span>Project</span>
+              <span>Raise progress</span>
+              <span>Launch timing</span>
+              <span>Allocation</span>
+              <span>Eligibility</span>
+              <span>Participants</span>
+              <span>Action</span>
+            </div>
+            {filteredLaunches.map((launch) => (
+              <LaunchRow key={launch.slug} launch={launch} {...props} />
+            ))}
+            {filteredLaunches.length === 0 && (
+              <div className="empty-state">
+                <Icon name="search" size={24} />
+                <h3>No matching launches</h3>
+                <p>Try another token name or reset the current filter.</p>
+                <button type="button" className="text-button" onClick={() => { setFilter('All'); setQuery('') }}>Show every launch</button>
+              </div>
+            )}
+          </div>
+          <p className="data-caption">Illustrative project and raise data for this interface prototype.</p>
+        </section>
+      </main>
+      <Footer />
+    </>
+  )
+}
+
+function LaunchRow({ launch, isSignedIn, onLogin }: { launch: Launch } & SharedProps) {
+  const isUnavailable = launch.status === 'Upcoming'
+  const participationAction = launch.status === 'Live' || launch.status === 'Auction'
+  const destination = launch.status === 'Auction' ? `/auction/${launch.slug}` : `/launch/${launch.slug}`
+
+  function handleAction() {
+    if (participationAction && !isSignedIn) {
+      void onLogin(destination)
+      return
+    }
+    navigate(destination)
+  }
+
+  return (
+    <article className="launch-row">
+      <div className="project-cell" data-label="Project">
+        <TokenMark kind={launch.mark} />
+        <div>
+          <span className={`status status-${launch.status.toLowerCase().replace(/\s/g, '-')}`}>{launch.status}</span>
+          <h3>{launch.name}</h3>
+          <p className="symbol">{launch.symbol}</p>
+          <p>{launch.description}</p>
+        </div>
+      </div>
+      <div className="raise-cell" data-label="Raise progress">
+        <p><strong>{launch.raised}</strong> <span>/ {launch.target}</span></p>
+        <div className="progress-line"><span style={{ width: `${launch.progress}%` }} /></div>
+        <small>{launch.progress}% committed</small>
+      </div>
+      <div className="timing-cell" data-label="Launch timing">
+        <span>{launch.timingLabel}</span>
