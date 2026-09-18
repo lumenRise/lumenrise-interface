@@ -407,3 +407,207 @@ function LaunchRow({ launch, isSignedIn, onLogin }: { launch: Launch } & SharedP
       </div>
       <div className="timing-cell" data-label="Launch timing">
         <span>{launch.timingLabel}</span>
+        <strong>{launch.timingValue}</strong>
+        <small>{launch.date}</small>
+      </div>
+      <div className="allocation-cell" data-label="Allocation">
+        <strong>{launch.allocation}</strong>
+        <small>{launch.allocationNote}</small>
+      </div>
+      <div className="eligibility-cell" data-label="Eligibility">
+        {launch.reputation ? (
+          <>
+            <strong className="score-chip">Score {launch.reputation}+</strong>
+            <small>{isSignedIn ? 'Check your profile' : 'Log in to check'}</small>
+          </>
+        ) : (
+          <><strong>Open access</strong><small>No score required</small></>
+        )}
+      </div>
+      <div className="participants-cell" data-label="Participants">
+        <strong>{launch.participants}</strong>
+        <small>{launch.participants === '—' ? 'Not yet open' : 'participants'}</small>
+      </div>
+      <div className="action-cell" data-label="Action">
+        <button type="button" className={participationAction ? 'button button-primary' : 'button button-secondary'} disabled={isUnavailable} onClick={handleAction}>
+          {participationAction && !isSignedIn && <Icon name="lock" size={15} />}
+          {launch.action}
+        </button>
+        <Link to={`/launch/${launch.slug}`} className="detail-link">View details <Icon name="arrow" size={15} /></Link>
+      </div>
+    </article>
+  )
+}
+
+function TokenMark({ kind }: { kind: Launch['mark'] }) {
+  return (
+    <span className={`token-mark token-${kind}`} aria-hidden="true">
+      <svg viewBox="0 0 48 48">
+        {kind === 'star' && <path d="M24 5v38M5 24h38M11 11l26 26M37 11 11 37" />}
+        {kind === 'slash' && <><path d="m13 34 22-22" /><path d="m17 39 22-22" /></>}
+        {kind === 'orbit' && <><circle cx="24" cy="24" r="11" /><path d="M5 24h38M24 5v38M11 11l26 26M37 11 11 37" /></>}
+        {kind === 'hourglass' && <path d="M14 7h20M14 41h20M16 8c0 9 16 9 16 16S16 31 16 40M32 8c0 9-16 9-16 16s16 7 16 16" />}
+        {kind === 'arc' && <><path d="M8 31c5-15 27-18 34-4" /><path d="M8 37c5-15 27-18 34-4" /><circle cx="15" cy="17" r="4" /></>}
+        {kind === 'flag' && <><path d="M15 40V8M16 9h20l-6 8 6 8H16" /></>}
+      </svg>
+    </span>
+  )
+}
+
+function AuthGate({ onLogin, loginPending }: Pick<SharedProps, 'onLogin' | 'loginPending'>) {
+  return (
+    <section className="auth-gate">
+      <div className="gate-mark"><Icon name="wallet" size={24} /></div>
+      <h1>Log in to open your panel</h1>
+      <p>Your portfolio, reputation signals, and connected identities are tied to the Stellar address created or connected through Blux.</p>
+      <button className="button button-primary button-large" type="button" disabled={loginPending} onClick={() => void onLogin('/portfolio')}>
+        {loginPending ? 'Opening Blux…' : 'Continue with Blux'} <Icon name="arrow" />
+      </button>
+      <Link to="/" className="text-button">Browse launches without an account</Link>
+    </section>
+  )
+}
+
+function OnboardingPage(props: SharedProps) {
+  const { isSignedIn, address } = props
+  const [connections, setConnections] = useState<Connections>(() => loadConnections(address))
+  const [connecting, setConnecting] = useState<ConnectionKey | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  if (!isSignedIn) {
+    return <><Header {...props} /><main className="page"><AuthGate {...props} /></main><Footer /></>
+  }
+
+  function connect(provider: ConnectionKey) {
+    setConnecting(provider)
+    window.setTimeout(() => {
+      const handle = provider === 'x' ? '@stellar_builder' : 'stellar-builder'
+      const next = { ...connections, [provider]: { connected: true, handle, score: randomScore(), source: 'prototype' as const } }
+      setConnections(next)
+      saveConnections(address, next)
+      setConnecting(null)
+    }, 850)
+  }
+
+  async function copyAddress() {
+    if (!address) return
+    await navigator.clipboard.writeText(address)
+    setCopied(true)
+    window.setTimeout(() => setCopied(false), 1600)
+  }
+
+  function finish() {
+    window.localStorage.setItem(`launchpad:onboarded:${address}`, 'true')
+    const destination = window.sessionStorage.getItem('launchpad:returnTo') || '/portfolio'
+    window.sessionStorage.removeItem('launchpad:returnTo')
+    navigate(destination)
+  }
+
+  const completed = Object.values(connections).filter((item) => item.connected).length
+
+  return (
+    <div className="onboarding-shell">
+      <header className="onboarding-header">
+        <Logo />
+        <button className="text-button" type="button" onClick={finish}>Skip for now</button>
+      </header>
+      <main className="onboarding-layout">
+        <aside className="onboarding-aside">
+          <h2>Your wallet is ready.</h2>
+          <p>Optional setup: add the identities that make your activity easier to verify. You control what appears publicly.</p>
+          <div
+            className="setup-meter"
+            role="progressbar"
+            aria-label="Optional identity connections"
+            aria-valuemin={0}
+            aria-valuemax={3}
+            aria-valuenow={completed}
+            aria-valuetext={`${completed} of 3 optional connections complete`}
+          >
+            {[0, 1, 2].map((index) => <span key={index} className={index < completed ? 'done' : undefined} />)}
+          </div>
+          <p className="aside-note"><Icon name="shield" size={17} /> You can disconnect any account later in Settings.</p>
+        </aside>
+
+        <section className="identity-setup">
+          <div className="setup-heading">
+            <div>
+              <h1>Make your activity count.</h1>
+              <p>Connections are optional. Each one adds a separate, explainable signal—never a hidden overall rating.</p>
+            </div>
+            <div className="wallet-summary">
+              <span>Stellar account</span>
+              <strong>{shortAddress(address)}</strong>
+              <button type="button" aria-label="Copy Stellar address" onClick={() => void copyAddress()}>
+                <Icon name={copied ? 'check' : 'copy'} size={16} /> {copied ? 'Copied' : 'Copy'}
+              </button>
+            </div>
+          </div>
+
+          <div className="connection-list">
+            <ConnectionRow provider="x" title="Connect X" description="Use your X account as the public identity on your profile." signal="Social reputation" connection={connections.x} isConnecting={connecting === 'x'} onConnect={() => connect('x')} />
+            <ConnectionRow provider="github" title="Connect GitHub" description="Verify contribution history and developer activity." signal="Developer reputation" connection={connections.github} isConnecting={connecting === 'github'} onConnect={() => connect('github')} />
+            <ConnectionRow provider="gitlab" title="Connect GitLab" description="Add project history from your GitLab account." signal="Developer reputation" connection={connections.gitlab} isConnecting={connecting === 'gitlab'} onConnect={() => connect('gitlab')} />
+          </div>
+
+          <div className="prototype-note">
+            <Icon name="spark" size={18} />
+            <p><strong>Prototype connection flow.</strong> The buttons generate an illustrative signal locally. Production OAuth linking will be completed by the backend.</p>
+          </div>
+
+          <div className="setup-actions">
+            <p>{completed === 0 ? 'Nothing else is required.' : `${completed} optional ${completed === 1 ? 'identity' : 'identities'} connected.`}</p>
+            <button className="button button-primary button-large" type="button" onClick={finish}>
+              Continue to your panel <Icon name="arrow" />
+            </button>
+          </div>
+        </section>
+      </main>
+    </div>
+  )
+}
+
+function ConnectionRow({ provider, title, description, signal, connection, isConnecting, onConnect }: {
+  provider: ConnectionKey
+  title: string
+  description: string
+  signal: string
+  connection: Connection
+  isConnecting: boolean
+  onConnect: () => void
+}) {
+  const iconName: IconName = provider === 'x' ? 'x' : provider
+  return (
+    <article className={`connection-row ${connection.connected ? 'connected' : ''}`}>
+      <div className="connection-icon"><Icon name={iconName} size={22} /></div>
+      <div className="connection-copy">
+        <div><h3>{title}</h3><span>{signal}</span></div>
+        <p>{description}</p>
+        {connection.connected && <small>{connection.handle} · {connection.source === 'blux' ? 'Connected through Blux' : 'Prototype connection'}</small>}
+      </div>
+      {connection.connected ? (
+        <div className="connection-result">
+          <span>Signal</span>
+          <strong>{connection.score}</strong>
+          <span className="verified"><Icon name="check" size={14} /> Connected</span>
+        </div>
+      ) : (
+        <button className="button button-secondary" type="button" disabled={isConnecting} onClick={onConnect}>
+          {isConnecting ? 'Connecting…' : 'Connect'}
+        </button>
+      )}
+    </article>
+  )
+}
+
+function PortfolioPage(props: SharedProps) {
+  if (!props.isSignedIn) {
+    return <><Header {...props} /><main className="page"><AuthGate {...props} /></main><Footer /></>
+  }
+
+  const connections = loadConnections(props.address)
+  const scores = Object.values(connections).flatMap((item) => item.score ? [item.score] : [])
+  const reputation = scores.length ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length) : 38
+
+  return (
+    <>
