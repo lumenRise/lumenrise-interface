@@ -611,3 +611,207 @@ function PortfolioPage(props: SharedProps) {
 
   return (
     <>
+      <Header {...props} />
+      <main className="page dashboard-page">
+        <section className="dashboard-heading">
+          <div>
+            <h1>Your launch activity</h1>
+            <p>Commitments, allocations, claims, and identity signals for {shortAddress(props.address)}.</p>
+          </div>
+          <Link to="/settings" className="button button-secondary"><Icon name="settings" size={17} /> Manage account</Link>
+        </section>
+
+        <section className="account-strip" aria-label="Account overview">
+          <div className="account-identity">
+            <span className="identity-mark"><Icon name="wallet" /></span>
+            <div><span>Active Stellar account</span><strong>{shortAddress(props.address)}</strong></div>
+          </div>
+          <div><span>Reputation signal</span><strong>{reputation}<small>/100</small></strong></div>
+          <div><span>Connected identities</span><strong>{Object.values(connections).filter((item) => item.connected).length}<small>/3</small></strong></div>
+          <div><span>Claimable now</span><strong>420<small> MDR</small></strong></div>
+        </section>
+
+        <section className="dashboard-columns">
+          <div className="activity-panel">
+            <div className="panel-heading"><div><h2>Active positions</h2><p>Illustrative data</p></div><Link to="/">Explore launches <Icon name="arrow" size={15} /></Link></div>
+            <PortfolioRow token="MDR" project="Meridian" status="Committed" primary="$1,200 USDC" secondary="Estimated 1,840 MDR" action="Manage" />
+            <PortfolioRow token="LUMA" project="Luma Commons" status="Auction bid" primary="$640 USDC" secondary="Bid: $0.42 / LUMA" action="View bid" />
+            <PortfolioRow token="KPL" project="Kepler Studio" status="Claimable" primary="420 KPL" secondary="Next unlock Oct 14" action="Claim" highlighted />
+          </div>
+          <aside className="profile-panel">
+            <div className="panel-heading"><div><h2>Reputation</h2><p>Explainable signals</p></div><Link to="/reputation">View profile</Link></div>
+            <SignalRow label="Stellar activity" value={71} />
+            <SignalRow label="Developer reputation" value={connections.github.score || connections.gitlab.score || 32} />
+            <SignalRow label="Social reputation" value={connections.x.score || 24} />
+            <SignalRow label="Sybil confidence" value={84} />
+            <Link to="/onboarding" className="profile-cta"><Icon name="spark" size={17} /> Add another signal <Icon name="arrow" size={16} /></Link>
+          </aside>
+        </section>
+      </main>
+      <Footer />
+    </>
+  )
+}
+
+function PortfolioRow({ token, project, status, primary, secondary, action, highlighted = false }: {
+  token: string
+  project: string
+  status: string
+  primary: string
+  secondary: string
+  action: string
+  highlighted?: boolean
+}) {
+  return (
+    <article className="portfolio-row">
+      <span className="portfolio-token">{token.slice(0, 1)}</span>
+      <div><strong>{project}</strong><span>{token} · {status}</span></div>
+      <div><strong>{primary}</strong><span>{secondary}</span></div>
+      <button type="button" className={highlighted ? 'button button-primary' : 'button button-secondary'} onClick={() => navigate(`/launch/${project.toLowerCase().replace(/\s/g, '-')}`)}>{action}</button>
+    </article>
+  )
+}
+
+function SignalRow({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="signal-row">
+      <div><span>{label}</span><strong>{value}</strong></div>
+      <div className="signal-track"><span style={{ width: `${value}%` }} /></div>
+    </div>
+  )
+}
+
+function SettingsPage(props: SharedProps) {
+  const [connections, setConnections] = useState<Connections>(() => loadConnections(props.address))
+  const [connecting, setConnecting] = useState<ConnectionKey | null>(null)
+  const [publicProfile, setPublicProfile] = useState(true)
+  const [showHandles, setShowHandles] = useState(false)
+  const [launchEmails, setLaunchEmails] = useState(true)
+
+  if (!props.isSignedIn) {
+    return <><Header {...props} /><main className="page"><AuthGate {...props} /></main><Footer /></>
+  }
+
+  function updateConnection(provider: ConnectionKey) {
+    if (connections[provider].connected) {
+      const next = { ...connections, [provider]: { connected: false } }
+      setConnections(next)
+      saveConnections(props.address, next)
+      return
+    }
+    setConnecting(provider)
+    window.setTimeout(() => {
+      const next = {
+        ...connections,
+        [provider]: {
+          connected: true,
+          handle: provider === 'x' ? '@stellar_builder' : 'stellar-builder',
+          score: randomScore(),
+          source: 'prototype' as const,
+        },
+      }
+      setConnections(next)
+      saveConnections(props.address, next)
+      setConnecting(null)
+    }, 850)
+  }
+
+  return (
+    <>
+      <Header {...props} />
+      <main className="page settings-page">
+        <section className="settings-heading">
+          <div><h1>Connections & privacy</h1><p>Manage how you sign in, which identities are linked, and what appears on your public reputation profile.</p></div>
+        </section>
+
+        <div className="settings-layout">
+          <nav className="settings-nav" aria-label="Settings sections">
+            <a href="#account" className="active">Account</a>
+            <a href="#connections">Connections</a>
+            <a href="#privacy">Privacy</a>
+            <a href="#notifications">Notifications</a>
+          </nav>
+          <div className="settings-content">
+            <SettingsSection id="account" title="Stellar account" description="Blux manages your primary authentication and wallet session.">
+              <div className="settings-account"><span className="identity-mark"><Icon name="wallet" /></span><div><strong>{shortAddress(props.address)}</strong><span>Connected through Blux · Stellar Testnet</span></div><button type="button" className="text-button" onClick={() => navigate('/portfolio')}>View panel</button></div>
+            </SettingsSection>
+
+            <SettingsSection id="connections" title="Connected identities" description="Optional accounts add independent signals to your reputation profile.">
+              {(['x', 'github', 'gitlab'] as ConnectionKey[]).map((provider) => (
+                <div className="settings-connection" key={provider}>
+                  <span className="connection-icon"><Icon name={provider === 'x' ? 'x' : provider} /></span>
+                  <div><strong>{provider === 'x' ? 'X' : provider === 'github' ? 'GitHub' : 'GitLab'}</strong><span>{connections[provider].connected ? `${connections[provider].handle} · Signal ${connections[provider].score}` : 'Not connected'}</span></div>
+                  <button type="button" className="button button-secondary" disabled={connecting === provider} onClick={() => updateConnection(provider)}>{connecting === provider ? 'Connecting…' : connections[provider].connected ? 'Disconnect' : 'Connect'}</button>
+                </div>
+              ))}
+              <p className="inline-note">OAuth linking is represented as a frontend prototype until the backend is connected.</p>
+            </SettingsSection>
+
+            <SettingsSection id="privacy" title="Privacy" description="Choose what applications and public visitors can see.">
+              <ToggleRow label="Public reputation profile" description="Let people find the signals you choose to publish." value={publicProfile} onChange={setPublicProfile} />
+              <ToggleRow label="Expose connected handles" description="Show public usernames next to verified credentials." value={showHandles} onChange={setShowHandles} />
+            </SettingsSection>
+
+            <SettingsSection id="notifications" title="Notifications" description="Decide which launch events should reach you.">
+              <ToggleRow label="Launch and claim reminders" description="Get reminders before commitments close or tokens unlock." value={launchEmails} onChange={setLaunchEmails} />
+            </SettingsSection>
+
+            <section className="danger-row">
+              <div><h2>Session</h2><p>Sign out of this browser. Your saved profile connections remain attached to this prototype account.</p></div>
+              <button type="button" className="button button-secondary" onClick={props.onLogout}><Icon name="logout" size={17} /> Log out</button>
+            </section>
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </>
+  )
+}
+
+function SettingsSection({ id, title, description, children }: { id: string; title: string; description: string; children: React.ReactNode }) {
+  return <section className="settings-section" id={id}><div className="section-copy"><h2>{title}</h2><p>{description}</p></div><div>{children}</div></section>
+}
+
+function ToggleRow({ label, description, value, onChange }: { label: string; description: string; value: boolean; onChange: (value: boolean) => void }) {
+  return (
+    <div className="toggle-row">
+      <div><strong>{label}</strong><span>{description}</span></div>
+      <button type="button" className={`toggle ${value ? 'on' : ''}`} role="switch" aria-checked={value} aria-label={label} onClick={() => onChange(!value)}><span /></button>
+    </div>
+  )
+}
+
+const comingSoonContent: Record<string, { title: string; description: string; icon: IconName }> = {
+  '/reputation': { title: 'Reputation profile', description: 'A transparent view of Stellar activity, developer history, social reputation, ecosystem participation, wallet age, and Sybil confidence.', icon: 'shield' },
+  '/missions': { title: 'Missions', description: 'Practical ways to improve a specific reputation signal through verified ecosystem participation.', icon: 'spark' },
+  '/create': { title: 'Create a launch', description: 'Configure allocation mechanics, eligibility policies, accepted assets, vesting, claims, and Soroban deployment.', icon: 'wallet' },
+  '/campaigns': { title: 'Growth campaigns', description: 'Build quests, referrals, allowlists, and partner campaigns around genuine participation.', icon: 'spark' },
+  '/explorer': { title: 'Reputation explorer', description: 'Inspect public signals for a Stellar address and test how an eligibility policy treats it.', icon: 'search' },
+  '/developers': { title: 'Developer platform', description: 'API keys, SDK examples, policy tooling, webhooks, and eligibility queries for other Stellar applications.', icon: 'github' },
+  '/cli': { title: 'CLI & agents', description: 'Create, configure, and deploy reproducible Stellar launches from a terminal or coding agent.', icon: 'external' },
+}
+
+function ComingSoonPage(props: SharedProps) {
+  const basePath = props.path.startsWith('/launch/') ? '/launch/:slug' : props.path.startsWith('/auction/') ? '/auction/:slug' : props.path
+  const content = basePath === '/launch/:slug'
+    ? { title: 'Permanent project page', description: 'Project details, tokenomics, team, contracts, audits, allocation rules, vesting, updates, and post-launch liquidity will live here.', icon: 'external' as IconName }
+    : basePath === '/auction/:slug'
+      ? { title: 'Auction room', description: 'Bids, clearing range, supply, settlement rules, and claim status will be presented in a focused auction experience.', icon: 'wallet' as IconName }
+      : comingSoonContent[basePath] || { title: 'This route is taking shape', description: 'The foundation is in place and this product surface is next in the build sequence.', icon: 'spark' as IconName }
+
+  return (
+    <>
+      <Header {...props} />
+      <main className="page coming-soon">
+        <div className="coming-symbol"><Icon name={content.icon} size={28} /></div>
+        <h1>{content.title}</h1>
+        <p>{content.description}</p>
+        <div className="coming-actions"><Link to="/" className="button button-primary">Explore launches <Icon name="arrow" /></Link>{!props.isSignedIn && <button type="button" className="button button-secondary" onClick={() => void props.onLogin('/portfolio')}>Log in with Blux</button>}</div>
+        <div className="coming-index"><span>Discover</span><span>Build reputation</span><span>Participate</span><span>Claim</span><span>Track</span></div>
+      </main>
+      <Footer />
+    </>
+  )
+}
+
+export default App
