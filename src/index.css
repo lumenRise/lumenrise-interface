@@ -25,3 +25,29 @@
 * {
   box-sizing: border-box;
 }
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+body,
+button,
+input {
+  font: 500 15px/1.5 'Manrope Variable', sans-serif;
+}
+
+button,
+input {
+  color: inherit;
+}
+
+button,
+a {
