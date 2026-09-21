@@ -25,3 +25,16 @@ const bluxConfig: Parameters<typeof BluxProvider>[0]['config'] = {
     outlineWidth: '2px',
     outlineRadius: '14px',
     logo: `${window.location.origin}/favicon.svg`,
+    backdropBlur: '4px',
+    backdropColor: 'rgba(17, 19, 24, 0.28)',
+    boxShadow: '0 24px 70px rgba(17, 19, 24, 0.18)',
+  },
+}
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <BluxProvider config={bluxConfig}>
+      <App />
+    </BluxProvider>
+  </StrictMode>,
+)
