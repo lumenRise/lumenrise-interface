@@ -13,7 +13,7 @@ const APPROVAL = '0x' + 'a'.repeat(64), TRADE = '0x' + 'b'.repeat(64);
 function harness(options = {}) {
   const network = options.network ?? 'testnet', chainId = network === 'testnet' ? 84532 : 8453;
   const state = { chain: chainId, held: 10n ** 20n, pairHeld: 100000000n, rights: 10n ** 20n, allowance: 0n, gas: 10n ** 18n, owner: OWNER, ready: true, ...options };
-  const events = [], queue = [], values = [], refs = [], effects = [], cache = new Map();
+  const observers = [], events = [], queue = [], values = [], refs = [], effects = [], cache = new Map();
   let index = 0, refIndex = 0, effectIndex = 0, rendering = false, scheduled = false, current;
   const connector = { getChainId: async () => state.chain };
   const connection = { address: OWNER, connector };
@@ -35,6 +35,7 @@ function harness(options = {}) {
   function schedule() { if (!scheduled) { scheduled = true; queueMicrotask(() => { scheduled = false; render(); }); } }
   const result = data => ({ data, isError: false, isFetching: false, refetch: async () => result(typeof data === 'function' ? data() : data) });
   function read(options) {
+    observers.push(options);
     assert.equal(options.chainId, chainId); assert.ok(options.scopeKey.startsWith(`base:${network}:`));
     const get = () => options.functionName === 'balanceOf' ? options.address === PAIR ? state.pairHeld : state.held
       : options.functionName === 'allowance' ? state.allowance : options.functionName === 'sellable_balance' ? state.rights : { ...quote, ...(state.changedQuote ? { amount_received: 2n } : {}) };
@@ -78,7 +79,7 @@ function harness(options = {}) {
     const module = { exports: {} }; cache.set(file, module.exports);
     const code = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
     runInNewContext(code, { module, exports: module.exports, Error, TextEncoder,
-      require: name => name === 'react' ? react : name === 'wagmi' ? wagmi
+      require: name => name === '@/features/launches/hooks/queries' ? { usePageVisible: () => state.visible !== false } : name === 'react' ? react : name === 'wagmi' ? wagmi
         : name === '@/lib/launchpad' ? { useLaunchpad: () => ({ address: state.owner, accountReady: state.ready, baseSigningSupported: true, account: state.ready ? { status: 'registered', profile: { userId: 'did:privy:test' } } : { status: 'signed-out' } }) }
         : name === './use-base-launch-reads' ? { useBaseLaunchReads: () => ({ chainId, curve: CURVE, asset: ASSET, pair: PAIR, pairSymbol: 'USDC', unavailable: state.unavailable, revalidate: async () => { if (state.unavailable) throw new Error(state.unavailable); } }) }
         : name === '@/lib/api/client' ? { getApiBaseUrl: () => 'https://original.api/v1' }
@@ -89,12 +90,12 @@ function harness(options = {}) {
   const hook = load('features/base/use-base-trade-form.ts').useBaseTradeForm;
   function render() {
     if (rendering) return; rendering = true; index = refIndex = effectIndex = 0;
-    current = hook(launch, options.side ?? 'buy', false, () => {}, refresh);
+    current = hook(launch, options.side ?? 'buy', false, () => {}, refresh, undefined, state.active ?? true);
     for (const item of effects) if (item?.pending) { item.pending = false; item.cleanup?.(); item.cleanup = item.fn(); }
     rendering = false; return current;
   }
   render();
-  return { state, events, queue, launch, render, get model() { return current.model; }, async enter(value) { current.model.setEntry(value); await new Promise(resolve => setImmediate(resolve)); }, async submit() { await current.model.submit({ preventDefault() {} }); await new Promise(resolve => setImmediate(resolve)); } };
+  return { state, events, queue, launch, render, observers, get model() { return current.model; }, async enter(value) { current.model.setEntry(value); await new Promise(resolve => setImmediate(resolve)); }, async submit() { await current.model.submit({ preventDefault() {} }); await new Promise(resolve => setImmediate(resolve)); } };
 }
 for (const network of ['testnet', 'public']) for (const allowance of [0n, 10n ** 30n]) test(`${network} buy uses the launch pair spender; allowance ${allowance === 0n ? 'requires approval' : 'skips approval'}`, async () => {
   const h = harness({ network, allowance }); await h.enter('20.1'); await h.submit();
@@ -159,4 +160,20 @@ test('graduation during final curve gas estimation prevents the curve trade sign
   assert.equal(h.state.request, undefined);
   assert.equal(h.queue.length, 0);
   assert.match(h.model.error, /Graduation completed/);
+});
+
+for (const options of [{ active: false }, { visible: false }]) test(`inactive or hidden curve forms do not poll or submit: ${JSON.stringify(options)}`, async () => {
+  const h = harness(options);
+  await h.enter('1');
+  assert.ok(h.observers.every(call => call.query.enabled === false));
+  await h.submit();
+  assert.equal(h.events.some(event => event.startsWith('write:')), false);
+});
+test('an empty or zero curve amount does not enable a quote request', async () => {
+  const h = harness();
+  assert.equal(h.observers.findLast(call => call.functionName === 'quote_buy').query.enabled, false);
+  await h.enter('0');
+  assert.equal(h.observers.findLast(call => call.functionName === 'quote_buy').query.enabled, false);
+  await h.enter('1');
+  assert.equal(h.observers.findLast(call => call.functionName === 'quote_buy').query.enabled, true);
 });

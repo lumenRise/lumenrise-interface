@@ -11,6 +11,7 @@ import { isAddress } from 'viem';
 import { graduationAbi } from '@/lib/base/uniswap-v4';
 import { launchAbi } from '@/lib/base/launchAbi';
 import { useState } from 'react';
+import { usePageVisible } from '@/features/launches/hooks/queries';
 import { useLaunchpad } from '@/lib/launchpad';
 import type { BaseTradeInputs } from '../use-base-trade-form';
 type Props = {
@@ -23,11 +24,12 @@ export function BaseTradeForm(props: Props) {
 }
 function BaseTradeRouter(props: Props) {
   const { launch } = props;
+  const visible = usePageVisible();
   const [entry, setEntry] = useState(''), [limitEntry, setLimitEntry] = useState('');
   const [poolRoute, setPoolRoute] = useState(false);
   const chainId = launch.network === 'testnet' ? 84532 : 8453;
   const address = isAddress(launch.contractId) ? launch.contractId : undefined;
-  const query = { enabled: !!address, retry: false, refetchInterval: 3000 } as const;
+  const query = { enabled: props.active && visible && !!address, retry: false, refetchInterval: 3000, refetchIntervalInBackground: false } as const;
   // Cache the complete settlement struct on load, including pre-graduation launches.
   const graduation = useReadContract({ chainId, address, abi: graduationAbi, functionName: 'graduation_state', query });
   const state = useReadContract({ chainId, address, abi: launchAbi, functionName: 'get_state', query });
@@ -42,7 +44,8 @@ function useRefreshLaunch(launch: LaunchResult) {
   async function refresh() {
     const chainId = launch.network === 'testnet' ? 84532 : 8453;
     await Promise.all([
-      client.invalidateQueries({ queryKey: ['readContract', { chainId }] }),
+      ...['get_state', 'status', 'current_price', 'graduation_state', 'balanceOf', 'sellable_balance', 'allowance'].map(functionName =>
+        client.invalidateQueries({ queryKey: ['readContract', { chainId, functionName }] })),
       client.invalidateQueries({ queryKey: ['balance', { chainId }] }),
       client.invalidateQueries({ queryKey: ['base-v4-pool', chainId, launch.contractId] }),
       client.invalidateQueries({ queryKey: ['base-v4-quote'] }),
@@ -54,7 +57,7 @@ function useRefreshLaunch(launch: LaunchResult) {
 }
 function BaseCurveTradeForm(props: Props & { inputs: BaseTradeInputs }) {
   const refresh = useRefreshLaunch(props.launch);
-  const trade = useBaseTradeForm(props.launch, props.side, props.locked, props.setLocked, refresh, props.inputs);
+  const trade = useBaseTradeForm(props.launch, props.side, props.locked, props.setLocked, refresh, props.inputs, props.active);
   return <BaseTradePresentation {...props} trade={trade} />;
 }
 function BasePoolTradeForm(props: Props & { inputs: BaseTradeInputs }) {

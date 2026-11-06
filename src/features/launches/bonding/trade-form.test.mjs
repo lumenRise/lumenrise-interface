@@ -43,6 +43,9 @@ function load(filename, mocks = {}, globals = {}) {
 }
 function harness({
   side = 'buy',
+  active = true,
+  visible = true,
+  revalidate,
   registrationStored = true,
   pending = null,
   confirmation = 'success',
@@ -71,7 +74,7 @@ function harness({
     refs = [],
     storage = new Map(),
     key = `launchpad:pending-trade:${Networks.TESTNET}:${address}:${owner}`;
-  const requests = [];
+  const requests = [], quoteQueries = [];
   const rpcLookups = [];
   const timeoutHash = 'b'.repeat(64);
   const snapshot = {
@@ -124,10 +127,10 @@ function harness({
           return { hash: 'new-hash', returnValue: async () => { throw new Error('Do not use the unbounded Blux result waiter'); } };
         },
       }),
-      useReadContracts: (calls) => ({
+      useReadContracts: (calls, network, query) => { quoteQueries.push(query); return ({
         data: { values: [side === 'buy' ? buyQuote(BigInt(calls[0].args[0])) : quote] },
         isFetching: false,
-      }),
+      }); },
       readContracts: async (calls) => ({
         values: calls.map(call => call.fn === 'get_state'
           ? { ...snapshot.state, sold: currentSold }
@@ -156,7 +159,7 @@ function harness({
         n,
       ]),
     ),
-    '@/features/launches/hooks/queries': { usePageVisible: () => true },
+    '@/features/launches/hooks/queries': { usePageVisible: () => visible },
     '@/lib/api/client': { getApiUserId: () => '42', getApiBaseUrl: () => 'http://api.test' },
     '@/lib/api/launches/trade-queue': { releaseTradeReceipt() {},
       enqueueTrade(network, id, hash, trader, slug) {
@@ -220,6 +223,8 @@ function harness({
       assetSymbol: 'TOK',
       pairSymbol: paymentAsset.getCode(),
     },
+    active,
+    revalidate,
     locked: false,
     setLocked() {},
     refresh: async () => events.push('refresh'),
@@ -233,6 +238,7 @@ function harness({
     events,
     states,
     requests,
+    quoteQueries,
     snapshot,
     rpcLookups,
     storage,
@@ -840,4 +846,18 @@ test('graduated-pool output retains tiny values while minimum received shows thr
     } });
     assert.ok(content(updated).includes(expected));
   }
+});
+
+for (const options of [{ active: false }, { visible: false }]) test(`Stellar quotes and submission pause for inactive or hidden forms: ${JSON.stringify(options)}`, async () => {
+  const h = harness(options);
+  assert.ok(h.quoteQueries.every(query => query.enabled === false));
+  await h.submit();
+  assert.equal(h.writes(), 0);
+});
+test('failed refresh of cached Stellar identity blocks broadcasting', async () => {
+  let refreshed = false;
+  const h = harness({ revalidate: async () => { refreshed = true; throw new Error('Launch configuration changed'); } });
+  await h.submit();
+  assert.equal(refreshed, true);
+  assert.equal(h.writes(), 0);
 });

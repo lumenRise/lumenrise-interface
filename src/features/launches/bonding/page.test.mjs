@@ -87,6 +87,7 @@ for (const state of ['loaded', 'initial', 'error', 'refresh', 'wallet-ready', 'w
       },
       '@/lib/api/client': { ApiError: class ApiError extends Error {}, getApiChain: () => 'stellar' },
       '@/features/base': { BaseTradeForm: 'BaseTradeForm' },
+      '@/features/base/components/base-pool-table': { BasePoolTable: 'BasePoolTable' },
       '@/lib/configuration': { useConfiguration: () => ({ auth: { appId: 'test-app' } }) },
       '@/lib/base/deployment': { BASE_WRITE_BLOCK_REASON: 'Deployment verification required' },
       '@/features/launches/hooks/queries': {

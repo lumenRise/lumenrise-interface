@@ -13,12 +13,15 @@ import type { LaunchResult } from '@/lib/api/launches/market';
 import type { TradeConfirmation } from '@/features/launches';
 import type { TradeFormModel } from '@/features/launches';
 import { useBaseLaunchReads } from './use-base-launch-reads';
+import { usePageVisible } from '@/features/launches/hooks/queries';
 
 const activeTrades = new Set<string>();
 export type BaseTradeInputs = { entry: string; setEntry: Dispatch<SetStateAction<string>>; limitEntry: string; setLimitEntry: Dispatch<SetStateAction<string>> };
 
-export function useBaseTradeForm(launch: LaunchResult, side: 'buy' | 'sell', locked: boolean, setLocked: (locked: boolean) => void, refresh: () => Promise<void>, inputs?: BaseTradeInputs) {
+export function useBaseTradeForm(launch: LaunchResult, side: 'buy' | 'sell', locked: boolean, setLocked: (locked: boolean) => void, refresh: () => Promise<void>, inputs?: BaseTradeInputs, active = true) {
   const { address, account, accountReady, baseSigningSupported } = useLaunchpad();
+  const visible = usePageVisible();
+  const enabled = active && visible;
   const connection = useConnection();
   const { switchChainAsync } = useSwitchChain();
   const { writeContractAsync } = useWriteContract();
@@ -26,7 +29,7 @@ export function useBaseTradeForm(launch: LaunchResult, side: 'buy' | 'sell', loc
   const userId = account.status === 'registered' ? account.profile.userId : undefined;
   const identity = `${userId ?? ''}:${owner ?? ''}:${account.status}`;
   const scopeKey = `base:${launch.network}:${identity}:${launch.contractId}`;
-  const live = useBaseLaunchReads(launch, scopeKey);
+  const live = useBaseLaunchReads(launch, scopeKey, 'curve', enabled);
   const { chainId, asset, pair, curve } = live;
   const networkName = launch.network === 'testnet' ? 'Base Sepolia' : 'Base Mainnet';
   const buying = side === 'buy';
@@ -52,12 +55,12 @@ export function useBaseTradeForm(launch: LaunchResult, side: 'buy' | 'sell', loc
     return () => { epoch.current = {}; };
   }, [identity, connection.connector, connection.address]);
   useEffect(() => () => { receiptWaiter.current?.reject(new Error('Transaction tracking interrupted. Check its hash before trading again.')); }, []);
-  const query = { enabled: !!owner && !!asset && !!pair && !!curve && accountReady, retry: false, refetchInterval: 3000 } as const;
+  const query = { enabled: enabled && !!owner && !!asset && !!pair && !!curve && accountReady, retry: false, refetchInterval: 3000, refetchIntervalInBackground: false } as const;
   const held = useReadContract({ chainId, address: asset, abi: erc20Abi, functionName: 'balanceOf', args: owner ? [owner] : undefined, scopeKey, query });
   const pairHeld = useReadContract({ chainId, address: pair, abi: erc20Abi, functionName: 'balanceOf', args: owner ? [owner] : undefined, scopeKey, query });
   const rights = useReadContract({ chainId, address: curve, abi: launchAbi, functionName: 'sellable_balance', args: owner ? [owner] : undefined, scopeKey, query });
   const allowance = useReadContract({ chainId, address: buying ? pair : asset, abi: erc20Abi, functionName: 'allowance', args: owner && curve ? [owner, curve] : undefined, scopeKey, query });
-  const ownerCode = useBytecode({ chainId, address: owner, scopeKey, query });
+  const ownerCode = useBytecode({ chainId, address: owner, scopeKey, query: { ...query, staleTime: Infinity, refetchInterval: false } });
   const gas = useBalance({ chainId, address: owner, scopeKey, query });
   let amount: bigint | undefined, inputError = '', limitError = '';
   const inputDecimals = buying ? launch.pairDecimals : launch.assetDecimals;
@@ -73,7 +76,7 @@ export function useBaseTradeForm(launch: LaunchResult, side: 'buy' | 'sell', loc
   }
   const permitted = !live.unavailable && inputDecimals !== undefined && (!owner || baseSigningSupported === true);
   const quoteRead = useReadContract({ chainId, address: curve, abi: launchAbi, functionName: buying ? 'quote_buy' : 'quote_sell', args: [amount ?? BigInt(0)], scopeKey,
-    query: { enabled: permitted && amount !== undefined && !inputError, retry: false, refetchInterval: 3000 } });
+    query: { enabled: enabled && permitted && amount !== undefined && amount > BigInt(0) && !inputError, retry: false, refetchInterval: 3000, refetchIntervalInBackground: false } });
   const quote = permitted && !quoteRead.isError && !quoteRead.isPlaceholderData ? quoteRead.data : undefined;
   const minimumReceived = quote && bps !== undefined && !limitError ? quote.amount_received * (BigInt(10000) - bps) / BigInt(10000) : undefined;
   const limit = buying ? minimumReceived === undefined ? undefined : amount : minimumReceived;
@@ -107,7 +110,7 @@ export function useBaseTradeForm(launch: LaunchResult, side: 'buy' | 'sell', loc
   }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (activeTrades.has(scopeKey) || running.current || locked || submittedHash || !accountReady || !owner || !userId || !curve || !amount || !quote || minimumReceived === undefined || !permitted || limitError) return;
+    if (!enabled || activeTrades.has(scopeKey) || running.current || locked || submittedHash || !accountReady || !owner || !userId || !curve || !amount || !quote || minimumReceived === undefined || !permitted || limitError) return;
     const started = epoch.current, originalEntry = entry, originalSlippage = limitEntry;
     const origin = getApiBaseUrl();
     const context = { chain: 'base' as const, userId, apiBaseUrl: origin, awaitingReceipt: true };

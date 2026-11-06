@@ -15,13 +15,15 @@ import { formatV4Price, graduationAbi } from '@/lib/base/uniswap-v4';
 import { sameEvmAddress } from '@/lib/base/wallet';
 import { tradeTableClass } from '@/features/launches/trading/trade-table-style';
 import { useBaseV4Pool } from '../use-base-v4-pool';
+import { usePageVisible } from '@/features/launches/hooks/queries';
 
 export function BasePoolTable({ launch }: { launch: LaunchResult }) {
+  const visible = usePageVisible();
   const chainId = launch.network === 'testnet' ? 84532 : 8453;
   const address = isAddress(launch.contractId) ? launch.contractId : undefined;
   const settlement = useReadContract({ chainId, address, abi: graduationAbi, functionName: 'graduation_state',
-    query: { enabled: !!address, retry: false, refetchInterval: 3000 } });
-  const pool = useBaseV4Pool(launch, !!settlement.data?.settled);
+    query: { enabled: visible && !!address, retry: false, refetchInterval: 3000, refetchIntervalInBackground: false } });
+  const pool = useBaseV4Pool(launch, visible && !!settlement.data?.settled);
   const error = settlement.isError ? settlement.error : pool.isError ? pool.error : undefined;
   async function retry() {
     const result = await settlement.refetch();

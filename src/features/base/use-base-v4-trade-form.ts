@@ -14,18 +14,21 @@ import { encodeV4Swap, formatV4Price, PERMIT2, permit2Abi, poolId, v4Abi, v4Exec
 import { useBaseLaunchReads } from './use-base-launch-reads';
 import { useBaseV4Pool } from './use-base-v4-pool';
 import type { BaseTradeInputs } from './use-base-trade-form';
+import { usePageVisible } from '@/features/launches/hooks/queries';
 
 const activeSwaps = new Set<string>();
 export function useBaseV4TradeForm(launch: LaunchResult, side: 'buy' | 'sell', locked: boolean, setLocked: (value: boolean) => void, refresh: () => Promise<void>, inputs?: BaseTradeInputs, active = true) {
   const { address, account, accountReady, baseSigningSupported } = useLaunchpad();
+  const visible = usePageVisible();
+  const enabled = active && visible;
   const connection = useConnection();
   const { switchChainAsync } = useSwitchChain();
   const { writeContractAsync } = useWriteContract();
   const owner = address && isAddress(address) ? address : undefined;
   const userId = account.status === 'registered' ? account.profile.userId : undefined;
   const scopeKey = `base:${launch.network}:${userId ?? ''}:${owner ?? ''}:${launch.contractId}:${launch.asset}:${launch.pair}`;
-  const live = useBaseLaunchReads(launch, scopeKey, 'pool');
-  const pool = useBaseV4Pool(launch);
+  const live = useBaseLaunchReads(launch, scopeKey, 'pool', enabled);
+  const pool = useBaseV4Pool(launch, enabled);
   const { client, chainId, deployment } = pool;
   const buying = side === 'buy', input = buying ? live.pair : live.asset;
   const [localEntry, setLocalEntry] = useState(''), [localLimit, setLocalLimit] = useState('');
@@ -43,14 +46,14 @@ export function useBaseV4TradeForm(launch: LaunchResult, side: 'buy' | 'sell', l
   useLayoutEffect(() => { refreshRef.current = refresh; });
   const watchedPoolId = pool.isError ? undefined : pool.data?.graduation.pool_id;
   useEffect(() => {
-    if (!active || !client || !watchedPoolId) return;
+    if (!enabled || !client || !watchedPoolId) return;
     // Events invalidate API-backed views; the API remains authoritative for history.
     return client.watchContractEvent({ address: deployment.manager, abi: v4Abi, eventName: 'Swap',
       args: { id: watchedPoolId },
       onLogs: () => { void refreshRef.current().catch(() => { /* Queries retain their refresh errors. */ }); },
       onError: () => { /* Three-second polling continues if event reads fail. */ },
     });
-  }, [active, client, deployment.manager, watchedPoolId]);
+  }, [enabled, client, deployment.manager, watchedPoolId]);
   useEffect(() => {
     if (!confirmation) return;
     const update = () => {
@@ -67,7 +70,7 @@ export function useBaseV4TradeForm(launch: LaunchResult, side: 'buy' | 'sell', l
     window.addEventListener(QUEUE_EVENT, update);
     return () => window.removeEventListener(QUEUE_EVENT, update);
   }, [confirmation, launch.network, launch.contractId, userId]);
-  const query = { enabled: !!owner && !!live.asset && !!live.pair && accountReady, retry: false, refetchInterval: 3000 } as const;
+  const query = { enabled: enabled && !!owner && !!live.asset && !!live.pair && accountReady, retry: false, refetchInterval: 3000, refetchIntervalInBackground: false } as const;
   const held = useReadContract({ chainId, address: live.asset, abi: erc20Abi, functionName: 'balanceOf', args: owner ? [owner] : undefined, scopeKey, query });
   const pairHeld = useReadContract({ chainId, address: live.pair, abi: erc20Abi, functionName: 'balanceOf', args: owner ? [owner] : undefined, scopeKey, query });
   let amount: bigint | undefined, inputError = '', limitError = '';
@@ -86,19 +89,19 @@ export function useBaseV4TradeForm(launch: LaunchResult, side: 'buy' | 'sell', l
   }
   const unavailable = live.unavailable ?? (pool.isError ? pool.error.message : !pool.data ? 'Loading the graduated pool…' : undefined);
   const permitted = !unavailable && (!owner || baseSigningSupported === true);
-  const quoteIdentity = `${scopeKey}:${side}:${active}:${pool.data ? poolId(pool.data.key) : ''}:${connection.chainId}:${input}:${amount?.toString()}`;
+  const quoteIdentity = `${scopeKey}:${side}:${enabled}:${pool.data ? poolId(pool.data.key) : ''}:${connection.chainId}:${input}:${amount?.toString()}`;
   const [debouncedQuote, setDebouncedQuote] = useState({ key: quoteIdentity, ready: false });
   if (debouncedQuote.key !== quoteIdentity) setDebouncedQuote({ key: quoteIdentity, ready: false });
   useEffect(() => {
-    if (!active) return;
+    if (!enabled) return;
     const timer = setTimeout(() => setDebouncedQuote({ key: quoteIdentity, ready: true }), 300);
     return () => clearTimeout(timer);
-  }, [quoteIdentity, active]);
-  const quoteReady = active && debouncedQuote.key === quoteIdentity && debouncedQuote.ready && amount !== undefined && amount > BigInt(0);
+  }, [quoteIdentity, enabled]);
+  const quoteReady = enabled && debouncedQuote.key === quoteIdentity && debouncedQuote.ready && amount !== undefined && amount > BigInt(0);
   const quoteRead = useQuery({
     queryKey: ['base-v4-quote', quoteIdentity],
     enabled: permitted && !!client && !!pool.data && !!input && quoteReady,
-    retry: false, refetchInterval: 3000,
+    retry: false, refetchInterval: 3000, refetchIntervalInBackground: false,
     queryFn: async ({ signal }) => {
       signal.throwIfAborted();
       if (!client || !pool.data || !input || amount === undefined) throw new Error('The swap quote is unavailable.');
@@ -118,7 +121,7 @@ export function useBaseV4TradeForm(launch: LaunchResult, side: 'buy' | 'sell', l
   async function refreshWallet() { await Promise.all([held.refetch(), pairHeld.refetch(), pool.refetch(), quoteRead.refetch(), refresh()]); }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (running.current || activeSwaps.has(scopeKey) || locked || submittedHash || !accountReady || !userId || !owner || !input || !client || !amount || !quote || !minimumReceived || limitError || !permitted || !pool.data) return;
+    if (!enabled || running.current || activeSwaps.has(scopeKey) || locked || submittedHash || !accountReady || !userId || !owner || !input || !client || !amount || !quote || !minimumReceived || limitError || !permitted || !pool.data) return;
     const started = epoch.current, originalEntry = entry, originalLimit = limitEntry;
     const selectedPool = pool.data;
     const context = { chain: 'base' as const, userId, apiBaseUrl: getApiBaseUrl(), awaitingReceipt: true };

@@ -127,7 +127,7 @@ export function TradeActivity({
               }
               transition={reducedMotion ? { duration: 0 } : tradeTransition}
             >
-              {content}
+              {key === 'pools' && activeTab !== 'pools' ? null : content}
             </motion.div>
           </TabsContent>
         ))}

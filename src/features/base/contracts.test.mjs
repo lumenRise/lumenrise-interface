@@ -61,14 +61,14 @@ function deployment(patch = {}) {
   const launch = { network: 'testnet', factoryIndex: '9007199254740993', contractId: C, factoryContractId: F, asset: A, pair: P, owner: O, assetDecimals: 18, pairDecimals: 6, ...patch.launch };
   const values = { get_config: { factory: F, platform: F, platform_fee_bps: 100, params: { owner: O, asset: A, pair: P } }, get_state: { busy: false, graduated: false }, status: 1, current_price: 1000769n,
     settings: { platform: F, platform_fee_bps: 100, pair: P }, launch_at: C, getChainId: 84532n, ...patch.values };
-  const calls = [];
+  const calls = [], refreshes = [];
   const hooks = {
     useReadContract(options) { calls.push(options); const data = options.functionName === 'decimals' ? options.address === A ? 18 : 6 : values[options.functionName];
-      return { data, isError: false, refetch: async () => ({ data, isError: false }) }; },
-    useBytecode(options) { return { data: options.address === patch.emptyCode ? undefined : '0x1234', isError: false, refetch: async () => ({ data: options.address === patch.emptyCode ? undefined : '0x1234', isError: false }) }; },
+      return { data, isError: false, refetch: async () => { refreshes.push(options.functionName); return { data, isError: false }; } }; },
+    useBytecode(options) { calls.push(options); return { data: options.address === patch.emptyCode ? undefined : '0x1234', isError: false, refetch: async () => ({ data: options.address === patch.emptyCode ? undefined : '0x1234', isError: false }) }; },
   };
-  const load = loader({ wagmi: hooks, '@/lib/api/config': { getConfiguration: () => ({ chain: 'base', network: { configurations: { [launch.network]: { factoryContractId: F, launchConfigured: true } } } }) } });
-  return { runtime: load('features/base/use-base-launch-reads.ts').useBaseLaunchReads(launch, `base:${launch.network}:test-wallet`, patch.mode), calls };
+  const load = loader({ '@/features/launches/hooks/queries': { usePageVisible: () => patch.visible !== false }, wagmi: hooks, '@/lib/api/config': { getConfiguration: () => ({ chain: 'base', network: { configurations: { [launch.network]: { factoryContractId: F, launchConfigured: true } } } }) } });
+  return { runtime: load('features/base/use-base-launch-reads.ts').useBaseLaunchReads(launch, `base:${launch.network}:test-wallet`, patch.mode, patch.active ?? true), calls, refreshes };
 }
 for (const network of ['testnet', 'public']) test(`live ${network} curve verification uses explicitly scoped hooks and uint256 launch membership`, async () => {
   const chainId = network === 'testnet' ? 84532 : 8453;
@@ -92,4 +92,24 @@ for (const network of ['testnet', 'public']) test(`graduated ${network} launches
 });
 test('ungraduated launches cannot use the pool verification mode', async () => {
   const h = deployment({ mode: 'pool' }); assert.ok(h.runtime.unavailable); await assert.rejects(h.runtime.revalidate());
+});
+
+test('successful Base identity reads are cached while market state remains live', async () => {
+  const h = deployment();
+  for (const call of h.calls) {
+    if (['get_state', 'status', 'current_price'].includes(call.functionName)) assert.equal(call.query.refetchInterval, 3000);
+    else if (call.functionName === 'settings') assert.equal(call.query.refetchInterval, 60_000);
+    else {
+      assert.equal(call.query.staleTime, Infinity);
+      assert.equal(call.query.refetchInterval({ state: { status: 'success' } }), false);
+      assert.equal(call.query.refetchInterval({ state: { status: 'error' } }), 30_000);
+    }
+  }
+  await h.runtime.revalidate();
+  for (const name of ['get_config', 'get_state', 'status', 'current_price', 'settings', 'launch_at', 'decimals', 'getChainId'])
+    assert.ok(h.refreshes.includes(name), name + ' must be read fresh before signing');
+});
+for (const patch of [{ active: false }, { visible: false }]) test(`Base launch reads pause outside the active visible form: ${JSON.stringify(patch)}`, () => {
+  const h = deployment(patch);
+  assert.ok(h.calls.every(call => call.query.enabled === false));
 });

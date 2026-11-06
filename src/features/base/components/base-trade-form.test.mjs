@@ -13,6 +13,7 @@ function harness(patch = {}) {
   const jsx = (type, props, key) => ({ type, props, key });
   const trade = { model: {}, balances: {} };
   const mocks = {
+    '@/features/launches/hooks/queries': { usePageVisible: () => true },
     react: { useState(initial) { const i = index++; if (!(i in values)) values[i] = initial; return [values[i], value => { values[i] = value; }]; } },
     'react/jsx-runtime': { jsx, jsxs: jsx },
     wagmi: { useReadContract: request => ({ data: request.functionName === 'get_state' ? state.onChain : state.settlement }) },

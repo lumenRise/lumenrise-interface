@@ -7,34 +7,39 @@ import { launchAbi } from '@/lib/base/launchAbi';
 import { sameEvmAddress } from '@/lib/base/wallet';
 import { requireBaseWrites } from '@/lib/base/deployment';
 import { getConfiguration } from '@/lib/api/config';
+import { usePageVisible } from '@/features/launches/hooks/queries';
 import type { LaunchResult } from '@/lib/api/launches/market';
 export type BaseConfig = ContractFunctionReturnType<typeof launchAbi, 'view', 'get_config'>;
 const address = (value?: string): Address | undefined => value && isAddress(value) ? value : undefined;
-export function useBaseLaunchReads(launch: LaunchResult, scopeKey: string, mode: 'curve' | 'pool' = 'curve') {
+export function useBaseLaunchReads(launch: LaunchResult, scopeKey: string, mode: 'curve' | 'pool' = 'curve', active = true) {
+  const visible = usePageVisible();
   const chain = launch.network === 'testnet' ? baseSepolia : base;
   const chainId = chain.id;
   const configuration = getConfiguration();
   const configured = 'chain' in configuration ? configuration.network.configurations[launch.network] : undefined;
   const factory = address(configured?.factoryContractId), curve = address(launch.contractId);
   const asset = address(launch.asset), pair = address(launch.pair);
-  const query = { enabled: !!factory && !!curve && !!asset && !!pair, retry: false, refetchInterval: 3000 } as const;
-  const config = useReadContract({ chainId, address: curve, abi: launchAbi, functionName: 'get_config', scopeKey, query });
+  const query = { enabled: active && visible && !!factory && !!curve && !!asset && !!pair, retry: false, refetchInterval: 3000, refetchIntervalInBackground: false } as const;
+  // Successful identity reads stay cached; failed initial reads can still recover.
+  const fixedQuery = { ...query, staleTime: Infinity, refetchOnWindowFocus: false, refetchOnReconnect: false,
+    refetchInterval: (result: { state: { status: string } }) => result.state.status === 'error' ? 30_000 : false } as const;
+  const config = useReadContract({ chainId, address: curve, abi: launchAbi, functionName: 'get_config', scopeKey, query: fixedQuery });
   const state = useReadContract({ chainId, address: curve, abi: launchAbi, functionName: 'get_state', scopeKey, query });
   const status = useReadContract({ chainId, address: curve, abi: launchAbi, functionName: 'status', scopeKey, query });
   const price = useReadContract({ chainId, address: curve, abi: launchAbi, functionName: 'current_price', scopeKey, query: { ...query, enabled: query.enabled && mode === 'curve' } });
-  const settings = useReadContract({ chainId, address: factory, abi: factoryAbi, functionName: 'settings', scopeKey, query });
-  const member = useReadContract({ chainId, address: factory, abi: factoryAbi, functionName: 'launch_at', args: [BigInt(launch.factoryIndex)], scopeKey, query });
-  const assetDecimals = useReadContract({ chainId, address: asset, abi: erc20Abi, functionName: 'decimals', scopeKey, query });
-  const pairDecimals = useReadContract({ chainId, address: pair, abi: erc20Abi, functionName: 'decimals', scopeKey, query });
-  const pairSymbol = useReadContract({ chainId, address: pair, abi: erc20Abi, functionName: 'symbol', scopeKey, query });
-  const factoryCode = useBytecode({ chainId, address: factory, scopeKey, query });
-  const curveCode = useBytecode({ chainId, address: curve, scopeKey, query });
-  const assetCode = useBytecode({ chainId, address: asset, scopeKey, query });
-  const pairCode = useBytecode({ chainId, address: pair, scopeKey, query });
+  const settings = useReadContract({ chainId, address: factory, abi: factoryAbi, functionName: 'settings', scopeKey, query: { ...fixedQuery, staleTime: 60_000, refetchInterval: 60_000 } });
+  const member = useReadContract({ chainId, address: factory, abi: factoryAbi, functionName: 'launch_at', args: [BigInt(launch.factoryIndex)], scopeKey, query: fixedQuery });
+  const assetDecimals = useReadContract({ chainId, address: asset, abi: erc20Abi, functionName: 'decimals', scopeKey, query: fixedQuery });
+  const pairDecimals = useReadContract({ chainId, address: pair, abi: erc20Abi, functionName: 'decimals', scopeKey, query: fixedQuery });
+  const pairSymbol = useReadContract({ chainId, address: pair, abi: erc20Abi, functionName: 'symbol', scopeKey, query: fixedQuery });
+  const factoryCode = useBytecode({ chainId, address: factory, scopeKey, query: fixedQuery });
+  const curveCode = useBytecode({ chainId, address: curve, scopeKey, query: fixedQuery });
+  const assetCode = useBytecode({ chainId, address: asset, scopeKey, query: fixedQuery });
+  const pairCode = useBytecode({ chainId, address: pair, scopeKey, query: fixedQuery });
   // CHAINID executed on the RPC, independently of the configured transport's label.
   const rpcChain = useReadContract({ chainId, address: chain.contracts.multicall3.address,
     abi: [{ type: 'function', name: 'getChainId', inputs: [], outputs: [{ type: 'uint256' }], stateMutability: 'view' }],
-    functionName: 'getChainId', scopeKey, query });
+    functionName: 'getChainId', scopeKey, query: fixedQuery });
   const queries = { config, state, status, price, settings, member, assetDecimals, pairDecimals, factoryCode, curveCode, assetCode, pairCode, rpcChain };
   function verify(values: { [K in keyof typeof queries]: (typeof queries)[K]['data'] }) {
     if (mode === 'curve') requireBaseWrites('trading', launch.network);

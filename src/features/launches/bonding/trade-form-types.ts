@@ -19,6 +19,7 @@ export type TradeFormProps = {
   locked: boolean;
   setLocked: (value: boolean) => void;
   refresh: () => Promise<void>;
+  revalidate?: () => Promise<void>;
   balances?: { held?: bigint; pairHeld?: bigint; position?: bigint };
   balanceStatus?: Record<'held' | 'pairHeld' | 'position', BalanceStatus>;
 };

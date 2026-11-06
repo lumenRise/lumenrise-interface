@@ -117,9 +117,14 @@ function StellarBondingCurvePage({
       mounted.current = false;
     };
   }, []);
+  const configRead = useReadContracts(
+    [{ address, fn: 'get_config', args: [] }],
+    { network: NETWORK },
+    { enabled: isReady && liveEnabled, staleTime: Infinity, retry: false,
+      refetchInterval: query => query.state.status === 'error' ? 30_000 : false },
+  );
   const reads = useReadContracts(
     [
-      'get_config',
       'get_state',
       'status',
       'current_price',
@@ -128,15 +133,17 @@ function StellarBondingCurvePage({
       'graduation_preview',
     ].map((fn) => ({ address, fn, args: [] })),
     { network: NETWORK },
-    { enabled: isReady && liveEnabled, refetchInterval: 3_000, retry: false },
+    { enabled: isReady && liveEnabled, refetchInterval: 3_000, refetchIntervalInBackground: false, retry: false },
   );
+  const snapshotValues = configRead.data && reads.data
+    ? [...configRead.data.values, ...reads.data.values] : undefined;
   const decoded = decodeRead(
-    network === API_NETWORK ? reads.data?.values : undefined,
+    network === API_NETWORK ? snapshotValues : undefined,
     decodeSnapshot,
   );
   const snapshot = decoded.value;
   const params = snapshot?.config.params;
-  const tokensRead = useReadContracts(
+  const metadataRead = useReadContracts(
     [
       ...['name', 'symbol', 'decimals'].map((fn) => ({
         address: params?.asset ?? '',
@@ -148,6 +155,13 @@ function StellarBondingCurvePage({
         fn,
         args: [],
       })),
+    ],
+    { network: NETWORK },
+    { enabled: isReady && liveEnabled && !!params, staleTime: Infinity, retry: false,
+      refetchInterval: query => query.state.status === 'error' ? 30_000 : false },
+  );
+  const tokensRead = useReadContracts(
+    [
       { address: params?.asset ?? '', fn: 'balance', args: [address] },
       { address: params?.pair ?? '', fn: 'balance', args: [address] },
     ],
@@ -155,11 +169,13 @@ function StellarBondingCurvePage({
     {
       enabled: isReady && liveEnabled && !!params,
       refetchInterval: 3_000,
+      refetchIntervalInBackground: false,
       retry: false,
     },
   );
   const decodedTokens = decodeRead(
-    network === API_NETWORK ? tokensRead.data?.values : undefined,
+    network === API_NETWORK && metadataRead.data && tokensRead.data
+      ? [...metadataRead.data.values, ...tokensRead.data.values] : undefined,
     (values) => {
       if (!snapshot) throw new Error('Launch configuration is unavailable.');
       const tokens = decodeTokens(values, snapshot.config, NETWORK);
@@ -189,6 +205,7 @@ function StellarBondingCurvePage({
     {
       enabled: accountEnabled,
       refetchInterval: 3_000,
+      refetchIntervalInBackground: false,
       retry: false,
     },
   );
@@ -199,17 +216,31 @@ function StellarBondingCurvePage({
       client.invalidateQueries({ queryKey: ['blux', 'readContracts', NETWORK] }),
       client.invalidateQueries({ queryKey: launchKey(network, slug) }),
       client.invalidateQueries({ queryKey: ['launch-list', { chain: 'stellar', network }] }),
-      reads.refetch(),
-      ...(params ? [tokensRead.refetch()] : []),
+      configRead.refetch(), reads.refetch(),
+      ...(params ? [metadataRead.refetch(), tokensRead.refetch()] : []),
       ...(validWallet && params
         ? [wallet.refetch(), account.refetch()]
         : []),
     ]);
   }
 
+  async function revalidate() {
+    const [configuration, metadata, live, vault] = await Promise.all([
+      configRead.refetch(), metadataRead.refetch(), reads.refetch(), tokensRead.refetch(),
+    ]);
+    if ([configuration, metadata, live, vault].some(result => result.isError) ||
+        !configuration.data || !metadata.data || !live.data || !vault.data || !snapshot)
+      throw new Error('Launch information could not be verified. No transaction was submitted.');
+    const fresh = decodeSnapshot([...configuration.data.values, ...live.data.values]);
+    const freshTokens = decodeTokens([...metadata.data.values, ...vault.data.values], fresh.config, NETWORK);
+    const encode = (value: unknown) => JSON.stringify(value, (_, item: unknown) => typeof item === 'bigint' ? item.toString() : item);
+    if (encode(fresh.config) !== encode(snapshot.config) || freshTokens.assetDecimals !== BigInt(7) || freshTokens.pairDecimals !== BigInt(7))
+      throw new Error('Launch configuration changed. Review the updated launch before trading.');
+  }
+
   const coreError =
     network === API_NETWORK
-      ? decoded.error || (reads.error && errorMessage(reads.error))
+      ? decoded.error || ((configRead.error || reads.error) && errorMessage(configRead.error || reads.error))
       : undefined;
   const missingTrustlines =
     accountEnabled &&
@@ -287,6 +318,7 @@ function StellarBondingCurvePage({
           locked={locked}
           setLocked={setLocked}
           refresh={refresh}
+          revalidate={revalidate}
           balances={network === API_NETWORK ? wallet.balances : undefined}
           balanceStatus={network === API_NETWORK ? wallet.balanceStatus : undefined}
         />
@@ -311,6 +343,7 @@ function StellarBondingCurvePage({
           locked={locked}
           setLocked={setLocked}
           refresh={refresh}
+          revalidate={revalidate}
           balances={network === API_NETWORK ? wallet.balances : undefined}
           balanceStatus={network === API_NETWORK ? wallet.balanceStatus : undefined}
         />
@@ -324,17 +357,17 @@ function StellarBondingCurvePage({
       <pre className="mt-3 max-w-full overflow-x-auto rounded-lg bg-muted p-4 text-xs">
         {JSON.stringify(
           {
-            get_config: reads.data?.values[0],
-            get_state: reads.data?.values[1],
-            status: reads.data?.values[2],
-            current_price: reads.data?.values[3],
-            buyer_count: reads.data?.values[4],
-            claimable_team: reads.data?.values[5],
-            graduation_preview: reads.data?.values[6],
+            get_config: snapshotValues?.[0],
+            get_state: snapshotValues?.[1],
+            status: snapshotValues?.[2],
+            current_price: snapshotValues?.[3],
+            buyer_count: snapshotValues?.[4],
+            claimable_team: snapshotValues?.[5],
+            graduation_preview: snapshotValues?.[6],
             contractError: coreError,
             tokenError:
               decodedTokens.error ||
-              (tokensRead.error && errorMessage(tokensRead.error)),
+              ((metadataRead.error || tokensRead.error) && errorMessage(metadataRead.error || tokensRead.error)),
           },
           (_, value: unknown) =>
             typeof value === 'bigint' ? value.toString() : value,
@@ -345,7 +378,7 @@ function StellarBondingCurvePage({
   );
   const tradingError =
     network === API_NETWORK &&
-    (coreError || tokensRead.error || decodedTokens.error);
+    (coreError || metadataRead.error || tokensRead.error || decodedTokens.error);
   const tradingNotice = tradingError
     ? decoded.error || decodedTokens.error
       ? 'Token details could not be verified. Trading is temporarily unavailable.'
@@ -387,7 +420,7 @@ function StellarBondingCurvePage({
         !!address && network === API_NETWORK &&
         (!isReady ||
           (!snapshot && !coreError) ||
-          (!!snapshot && !tokens && !tokensRead.error && !decodedTokens.error))
+          (!!snapshot && !tokens && !metadataRead.error && !tokensRead.error && !decodedTokens.error))
       }
       loading={pageLoading}
       feedback={indexedFeedback}

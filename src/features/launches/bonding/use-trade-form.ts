@@ -43,6 +43,8 @@ export function useTradeForm({
   locked,
   setLocked,
   refresh,
+  revalidate,
+  active = true,
   balances,
 }: TradeFormProps) {
   const { user, isReady, sendTransaction } = useBlux();
@@ -114,12 +116,15 @@ export function useTradeForm({
     { network: NETWORK },
     {
       enabled:
+        active &&
         visible &&
+        entryCurrent &&
         isReady &&
         permitted &&
         quoteAmount !== undefined &&
         quoteAmount > BigInt(0),
       refetchInterval: 3_000,
+      refetchIntervalInBackground: false,
       retry: false,
     },
   );
@@ -160,6 +165,8 @@ export function useTradeForm({
     event.preventDefault();
 
     if (
+      !active ||
+      !visible ||
       running.current ||
       locked ||
       !user ||
@@ -188,6 +195,7 @@ export function useTradeForm({
     const originalApiBaseUrl = getApiBaseUrl();
 
     try {
+      await revalidate?.();
       if (!originalUserId) throw new Error('Finish signing in to your LumenRise account before trading.');
       if (!StrKey.isValidEd25519PublicKey(user.address))
         throw new Error('Trading requires a connected Stellar account.');

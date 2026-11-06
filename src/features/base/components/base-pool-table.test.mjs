@@ -12,7 +12,7 @@ function harness(options = {}) {
   const launch = { network: 'testnet', contractId: A, asset: B, pair: A, assetDecimals: 18, pairDecimals: 6, metadata: { symbol: 'ANG' }, ...options.launch };
   const data = { key: { currency0: A, currency1: B, tickSpacing: 60 }, slot0: [5505400448681967349566181336224857653n, 361151, 0, 3000], liquidity: 340490822233631430n,
     blockNumber: 52988179n, graduation: { pool_id: ID, token_id: 33196n, asset_deposited: 100n * 10n ** 18n, pair_deposited: 4900n * 10n ** 6n } };
-  const events = [];
+  const events = [], queries = [];
   const settlement = { data: { settled: true }, isPending: false, refetch: async () => { events.push('settlement'); return { data: settlement.data }; }, ...options.settlement };
   const pool = { data, deployment: { manager: A, positions: B }, refetch: async () => events.push('pool'), ...options.pool };
   const module = { exports: {} };
@@ -20,7 +20,9 @@ function harness(options = {}) {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
   }).outputText;
   const mocks = {
-    'react/jsx-runtime': { jsx, jsxs: jsx }, wagmi: { useReadContract: o => { events.push(o.chainId); return settlement; } },
+    '@/features/launches/hooks/queries': { usePageVisible: () => options.visible !== false },
+    'react/jsx-runtime': { jsx, jsxs: jsx }, wagmi: { useReadContract: o => { events.push(o.chainId); queries.push(o); return settlement; } },
+    '@/features/launches/trading/trade-table-style': { tradeTableClass: 'trade-table' },
     'lucide-react': ui('Droplets'), '@/components/ui/button': ui('Button'),
     '@/components/ui/empty': ui('Empty', 'EmptyDescription', 'EmptyHeader', 'EmptyMedia', 'EmptyTitle'),
     '@/components/ui/skeleton': ui('Skeleton'), '@/components/ui/table': ui('Table', 'TableBody', 'TableCell', 'TableHead', 'TableHeader', 'TableRow'),
@@ -36,22 +38,21 @@ function harness(options = {}) {
     '../use-base-v4-pool': { useBaseV4Pool: (l, enabled) => { events.push(enabled); return pool; } },
   };
   runInNewContext(output, { module, exports: module.exports, require: name => name in mocks ? mocks[name] : require(name) });
-  return { tree: module.exports.BasePoolTable({ launch }), events };
+  return { tree: module.exports.BasePoolTable({ launch }), events, queries };
 }
 function elements(node) {
   if (!node || typeof node !== 'object') return [];
   return [node, ...[node.props?.children].flat(Infinity).flatMap(elements)];
 }
 const text = node => typeof node === 'string' || typeof node === 'number' ? String(node) : !node ? '' : [node.props?.children].flat(Infinity).map(text).join(' ');
-for (const network of ['testnet', 'public']) test(`pool table shows verified pool metadata and correct ${network} explorer links`, () => {
-  const h = harness({ launch: { network } }), nodes = elements(h.tree), content = text(h.tree);
-  assert.ok(content.includes('Uniswap V4')); assert.ok(content.includes('33196')); assert.ok(content.includes('0.000207100591'));
-  assert.ok(content.includes('340490822233631430')); assert.ok(content.includes('0.3%'));
-  assert.ok(content.includes('Currency 0 · USDC')); assert.ok(content.includes('Currency 1 · ANG'));
-  assert.ok(content.includes('100 ANG')); assert.ok(content.includes('4900 USDC'));
+for (const network of ['testnet', 'public']) test(`pool table shows verified live price, fees and deposits on ${network}`, () => {
+  const h = harness({ launch: { network } }), content = text(h.tree);
+  assert.ok(content.includes('Uniswap V4')); assert.ok(content.includes('0.000207100591'));
+  assert.match(content, /0\.300\s*%/);
+  assert.ok(content.includes('ANG') && content.includes('USDC'));
+  assert.ok(content.includes('100.000')); assert.ok(content.includes('4900.000'));
   assert.ok(content.includes('not current pool balances'));
-  assert.ok(nodes.some(n => n.type === 'CopyAddress' && n.props.address === ID));
-  for (const link of nodes.filter(n => n.type === 'a')) assert.ok(link.props.href.startsWith(network === 'testnet' ? 'https://sepolia.basescan.org/' : 'https://basescan.org/'));
+  assert.ok(content.includes(network === 'testnet' ? 'Sepolia' : 'Mainnet'));
   assert.ok(h.events.includes(network === 'testnet' ? 84532 : 8453));
 });
 test('unsettled launches show no invented pool data and disable pool discovery', () => {
@@ -80,4 +81,10 @@ test('missing decimals do not produce misleading amounts', () => {
   const h = harness({ launch: { pairDecimals: undefined } });
   assert.ok(text(h.tree).includes('decimals could not be verified'));
   assert.equal(elements(h.tree).some(n => n.type === 'Table'), false);
+});
+
+test('hidden pool tables pause settlement and pool reads', () => {
+  const h = harness({ visible: false });
+  assert.ok(h.queries.every(query => query.query.enabled === false));
+  assert.ok(h.events.includes(false));
 });

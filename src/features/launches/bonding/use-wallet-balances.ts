@@ -32,6 +32,7 @@ function useWalletValue(
     },
     enabled: options.enabled,
     refetchInterval: 3_000,
+    refetchIntervalInBackground: false,
     retry: false,
   });
   const status: BalanceStatus =

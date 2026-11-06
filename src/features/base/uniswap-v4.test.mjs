@@ -69,6 +69,7 @@ test('receipt verification accepts only the selected manager, pool, router and d
 
 function poolHarness(patch = {}) {
   let options;
+  const cache = new (require('@tanstack/react-query').QueryClient)({ defaultOptions: { queries: { gcTime: Infinity } } });
   const calls = [], deployment = v4.V4_DEPLOYMENTS[patch.chainId ?? 84532];
   const client = {
     getBlockNumber: async () => 123n,
@@ -79,9 +80,9 @@ function poolHarness(patch = {}) {
       return values[request.functionName];
     },
   };
-  const load = loader({ '@/lib/api/config': { getConfiguration: () => ({ chain: 'base', network: { configurations: { [patch.chainId === 8453 ? 'public' : 'testnet']: { uniswapV4: patch.missingConfig ? undefined : { poolManager: deployment.manager, stateView: deployment.stateView, positionManager: deployment.positions, ...patch.config } } } } }) }, '@tanstack/react-query': { useQuery: o => { options = o; return {}; } }, wagmi: { usePublicClient: () => client } });
-  load('features/base/use-base-v4-pool.ts').useBaseV4Pool({ network: patch.chainId === 8453 ? 'public' : 'testnet', contractId: C, asset: A, pair: B, assetDecimals: 18, pairDecimals: 6, ...patch.launch });
-  return { run: () => options.queryFn(), calls };
+  const load = loader({ '@/features/launches/hooks/queries': { usePageVisible: () => patch.visible !== false }, '@/lib/api/config': { getConfiguration: () => ({ chain: 'base', network: { configurations: { [patch.chainId === 8453 ? 'public' : 'testnet']: { uniswapV4: patch.missingConfig ? undefined : { poolManager: deployment.manager, stateView: deployment.stateView, positionManager: deployment.positions, ...patch.config } } } } }) }, '@tanstack/react-query': { useQueryClient: () => cache, useQuery: o => { options = o; return { refetch: async () => ({ data: await o.queryFn() }) }; } }, wagmi: { usePublicClient: () => client } });
+  const runtime = load('features/base/use-base-v4-pool.ts').useBaseV4Pool({ network: patch.chainId === 8453 ? 'public' : 'testnet', contractId: C, asset: A, pair: B, assetDecimals: 18, pairDecimals: 6, ...patch.launch }, patch.active ?? true);
+  return { run: () => options.queryFn(), calls, options, refetch: runtime.refetch };
 }
 for (const chainId of [8453, 84532]) test(`pool discovery verifies the NFT, pool key and manager on ${chainId} at one block`, async () => {
   const h = poolHarness({ chainId }); const result = await h.run();
@@ -141,11 +142,12 @@ function tradeHarness(options = {}) {
   };
   const load = loader({
     __window: browserWindow, react,
+    '@/features/launches/hooks/queries': { usePageVisible: () => state.visible !== false },
     '@tanstack/react-query': { useQuery: o => { state.queryOptions = o; return ({ data: quote(), isError: false, isFetching: false, isPlaceholderData: false, error: null,
       refetch: async () => ({ data: await o.queryFn({ signal: new AbortController().signal }), isError: false }) }); } },
     wagmi: {
       useConnection: () => { connection.address = state.owner; return connection; }, useSwitchChain: () => ({ switchChainAsync: async () => {} }),
-      useReadContract: () => ({ data: state.balance, refetch: async () => ({ data: state.balance }) }),
+      useReadContract: o => { (state.walletQueries ??= []).push(o); return ({ data: state.balance, refetch: async () => ({ data: state.balance }) }); },
       useWriteContract: () => ({ writeContractAsync: async r => {
         calls.push('write:' + (r.address === v4.PERMIT2 ? 'permit2' : r.functionName));
         assert.equal(r.chainId, state.chainId); assert.equal(r.account, C);
@@ -277,4 +279,27 @@ test('switching direction hides incompatible quotes and removes the inactive poo
   h.state.active = false; h.render(); assert.equal(h.model().quote, undefined); assert.equal(h.state.unsubscribed, true);
   h.state.active = true; h.render(); assert.equal(h.model().quote, undefined);
   await new Promise(resolve => setTimeout(resolve, 320)); h.render(); assert.ok(h.model().quote);
+});
+
+test('pool polling reuses verified identity and explicit pre-signature refresh rechecks it', async () => {
+  const h = poolHarness();
+  await h.run();
+  const identities = h.calls.filter(call => call.functionName === 'getPoolAndPositionInfo').length;
+  await h.run();
+  assert.equal(h.calls.filter(call => call.functionName === 'getPoolAndPositionInfo').length, identities);
+  assert.equal(h.calls.filter(call => call.functionName === 'poolManager').length, 4);
+  assert.equal(h.calls.filter(call => call.functionName === 'getSlot0').length, 2);
+  await h.refetch();
+  assert.equal(h.calls.filter(call => call.functionName === 'getPoolAndPositionInfo').length, identities + 1);
+  assert.equal(h.calls.filter(call => call.functionName === 'poolManager').length, 8);
+});
+for (const patch of [{ active: false }, { visible: false }]) test(`pool polling pauses outside the active visible section: ${JSON.stringify(patch)}`, () => {
+  const h = poolHarness(patch);
+  assert.equal(h.options.enabled, false);
+});
+for (const options of [{ active: false }, { visible: false }]) test(`hidden or inactive pool trades stop quotes, balances and event subscriptions: ${JSON.stringify(options)}`, () => {
+  const h = tradeHarness(options);
+  assert.equal(h.state.queryOptions.enabled, false);
+  assert.ok(h.state.walletQueries.every(query => query.query.enabled === false));
+  assert.equal(h.state.subscription, undefined);
 });
