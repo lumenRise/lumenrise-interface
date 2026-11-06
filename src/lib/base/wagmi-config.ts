@@ -1,17 +1,16 @@
-import { createConfig } from '@privy-io/wagmi';
-import { base, baseSepolia } from 'viem/chains';
 import { http } from 'wagmi';
+import { createConfig } from '@privy-io/wagmi';
+
+import { getBaseChain } from './get-base-chain';
 import type { BaseNetwork } from '../networks/types';
 
-export function createBaseWagmiConfig(network: BaseNetwork) {
-  if (network.chainId === base.id) {
-    return createConfig({
-      chains: [base],
-      transports: { [base.id]: http() },
-    });
-  }
+const createBaseWagmiConfig = (network: BaseNetwork): ReturnType<typeof createConfig> => {
+  const chain = getBaseChain(network);
+
   return createConfig({
-    chains: [baseSepolia],
-    transports: { [baseSepolia.id]: http() },
+    chains: [chain],
+    transports: { [chain.id]: http(chain.rpcUrls.default.http[0]) },
   });
-}
+};
+
+export { createBaseWagmiConfig };

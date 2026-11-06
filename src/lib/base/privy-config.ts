@@ -1,13 +1,14 @@
 import type { PrivyClientConfig } from '@privy-io/react-auth';
-import { base, baseSepolia } from 'viem/chains';
+
+import { getBaseChain } from './get-base-chain';
 import type { BaseNetwork } from '../networks/types';
 
-/** Public SDK configuration only. Credentials are injected at the server boundary. */
-export function createPrivyConfig(
+const createPrivyConfig = (
   network: BaseNetwork,
   dark: boolean,
-): PrivyClientConfig {
-  const chain = network.chainId === base.id ? base : baseSepolia;
+): PrivyClientConfig => {
+  const chain = getBaseChain(network);
+
   return {
     defaultChain: chain,
     supportedChains: [chain],
@@ -22,4 +23,6 @@ export function createPrivyConfig(
       walletChainType: 'ethereum-only',
     },
   };
-}
+};
+
+export { createPrivyConfig };
