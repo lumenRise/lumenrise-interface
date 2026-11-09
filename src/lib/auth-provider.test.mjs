@@ -19,7 +19,7 @@ function loadSource(filename, globals = {}) {
   runInNewContext(output, {
     module, exports: module.exports, Date, Error, JSON,
     atob: (value) => Buffer.from(value, 'base64').toString('binary'),
-    require: (name) => require(name),
+    require: (name) => name.startsWith('.') ? loadSource(resolve(dirname(path), `${name}.ts`), globals) : require(name),
     ...globals,
   }, { filename: path });
   return module.exports;
@@ -57,11 +57,13 @@ test('extracts a numeric sub claim from the stored token', () => {
   assert.equal(provider.getAuthProviderUserId(), '42');
 });
 
-test('accepts a numeric string sub claim', () => {
-  const provider = loadWithStorage({
-    __BLUX__JWT_STORE: token({ sub: '42' }),
-  });
-  assert.equal(provider.getAuthProviderUserId(), '42');
+test('accepts public and legacy numeric string sub claims unchanged', () => {
+  for (const userId of ['42', 'ekfvknkfkwsmaka322aa']) {
+    const provider = loadWithStorage({
+      __BLUX__JWT_STORE: token({ sub: userId }),
+    });
+    assert.equal(provider.getAuthProviderUserId(), userId);
+  }
 });
 
 test('falls back to the persisted session record and other claim names', () => {
@@ -93,7 +95,7 @@ test('a wallet address is never mistaken for a user id', () => {
 });
 
 test('rejects non-positive or non-integer ids', () => {
-  for (const sub of [0, -3, 1.5, '0', 'abc']) {
+  for (const sub of [0, -3, 1.5, '0', 'invalid/id']) {
     const provider = loadWithStorage({ __BLUX__JWT_STORE: token({ sub }) });
     assert.equal(provider.getAuthProviderUserId(), null, `sub=${sub}`);
   }

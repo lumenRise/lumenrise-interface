@@ -1,5 +1,8 @@
+import readUserId from './read-user-id';
 import { getConfiguration } from './config';
 import { validateText, validateImage } from '../client-rules';
+import { ApiError, apiRequest, getApiUserId } from './client';
+
 /**
  * Account identification and registration endpoints.
  *
@@ -8,7 +11,6 @@ import { validateText, validateImage } from '../client-rules';
  * pair for verification; subsequent requests retain that userId in X-User-Id.
  */
 
-import { ApiError, apiRequest, getApiUserId, getApiChain } from './client';
 
 export type RegistrationStatus =
   | { registered: false; userId: string }
@@ -42,18 +44,6 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 
 function invalid(message: string): never {
   throw new ApiError(message, 'invalid-response');
-}
-
-function readUserId(value: unknown): string {
-  if (getApiChain() === 'base') {
-    if (typeof value === 'string' && /^did:privy:[A-Za-z0-9_-]+$/.test(value) && value === getApiUserId()) return value;
-    return invalid('The server returned a mismatched Privy identity.');
-  }
-  if (typeof value === 'string' && /^\d+$/.test(value)) return value;
-  if (typeof value === 'number' && Number.isSafeInteger(value) && value > 0) {
-    return String(value);
-  }
-  return invalid('The server returned an invalid registration response.');
 }
 
 function readAvatarUrl(value: unknown): string | null {

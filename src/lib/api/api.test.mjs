@@ -129,21 +129,23 @@ test('formats byte limits for display', () => {
   assert.equal(client.formatByteLimit(0), '');
 });
 
-test('parses the unregistered status envelope and sends X-User-Id', async () => {
-  const { calls, client, auth } = harness((_url, init) => {
-    assert.equal(init.headers['X-User-Id'], '42');
-    assert.equal(init.method, 'GET');
-    assert.equal(init.body, undefined);
-    return response({
-      body: successBody({ registered: false, userId: '42' }, 'Registration status'),
+test('parses public and legacy user IDs without changing X-User-Id', async () => {
+  for (const userId of ['42', 'ekfvknkfkwsmaka322aa']) {
+    const { calls, client, auth } = harness((_url, init) => {
+      assert.equal(init.headers['X-User-Id'], userId);
+      assert.equal(init.method, 'GET');
+      assert.equal(init.body, undefined);
+      return response({
+        body: successBody({ registered: false, userId }, 'Registration status'),
+      });
     });
-  });
-  client.configureApi('http://localhost:5000');
-  client.setApiUserId('42');
-  const status = await auth.getRegistrationStatus();
-  same(status, { registered: false, userId: '42' });
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0].url, 'http://localhost:5000/v1/auth/status');
+    client.configureApi('http://localhost:5000');
+    client.setApiUserId(userId);
+    const status = await auth.getRegistrationStatus();
+    same(status, { registered: false, userId });
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url, 'http://localhost:5000/v1/auth/status');
+  }
 });
 
 test('parses the registered status envelope into a profile', async () => {

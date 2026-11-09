@@ -1,3 +1,5 @@
+import normalizeProviderUserId from '../normalize-provider-user-id';
+
 /**
  * Shared HTTP client for the LumenRise API.
  *
@@ -110,7 +112,13 @@ export function getApiBaseUrl() {
 
 /** Called by the app providers whenever the signed-in user changes or signs out. */
 export function setApiUserId(userId: string | null) {
-  currentUserId = userId && (selectedChain === 'base' ? /^did:privy:[A-Za-z0-9_-]+$/ : /^\d+$/).test(userId) ? userId : null;
+  if (selectedChain === 'base') {
+    currentUserId = userId && /^did:privy:[A-Za-z0-9_-]+$/.test(userId) ? userId : null;
+
+    return;
+  }
+
+  currentUserId = normalizeProviderUserId(userId);
 }
 
 export function getApiUserId() {
