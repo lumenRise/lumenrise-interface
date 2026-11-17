@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { BluxProvider, useBlux, useSwitchNetwork } from '@bluxcc/react';
+import { getJwt, BluxProvider, useBlux, useSwitchNetwork } from '@bluxcc/react';
 import {
   deleteAvatar,
   getProfile,
@@ -83,7 +83,7 @@ function statusCheckMessage(error: unknown): string {
         return 'Your sign-in ID or Stellar address is invalid. Sign out and sign in again.';
       }
       if (error.status === 401) {
-        return 'Blux could not verify your sign-in and Stellar wallet. Sign out and sign in again.';
+        return 'We could not verify your sign-in and Stellar wallet. Sign out and sign in again.';
       }
       if (error.status === 403) {
         return 'This account has been deactivated. Contact support if you believe this is a mistake.';
@@ -178,10 +178,10 @@ function LaunchpadProvider({
   const blux = useBlux();
   const router = useRouter();
   const pathname = usePathname();
-  const providerUserId = blux.isAuthenticated ? getAuthProviderUserId() : null;
+  const providerToken = blux.isAuthenticated ? getJwt() : undefined;
   const selectedAddress = blux.user?.address;
   const userIdentity = blux.isAuthenticated && blux.user
-    ? `${providerUserId}:${blux.user.authMethod}:${blux.user.authValue}:${blux.user.address}`
+    ? `${blux.user.authMethod}:${blux.user.authValue}:${blux.user.address}`
     : null;
   const [loginPhase, setLoginPhase] = useState<'connecting' | 'checking' | null>(
     null,
@@ -264,10 +264,11 @@ function LaunchpadProvider({
       settleWaiter('cancelled');
       return;
     }
-    const userId = providerUserId;
     const address = selectedAddress;
-    if (!userId || !address) {
-      setApiUserId(null);
+
+    setApiUserId(null);
+
+    if (!providerToken || !address) {
       settleWaiter('error');
       setAccount({
         status: 'error',
@@ -276,13 +277,35 @@ function LaunchpadProvider({
       });
       return;
     }
-    setApiUserId(userId);
-    let cancelled = false;
     const controller = new AbortController();
+
     setAccount({ status: 'checking' });
-    resolveAccount({ userId, address, signal: controller.signal })
-      .then((status) => {
-        if (cancelled || !isCurrent()) return;
+
+    getAuthProviderUserId(providerToken, controller.signal)
+      .then(async (userId: string | null): Promise<void> => {
+        if (!isCurrent()) {
+          return;
+        }
+
+        if (!userId) {
+          settleWaiter('error');
+
+          setAccount({
+            status: 'error',
+            message: 'We could not verify your sign-in. Sign out and sign in again.',
+          });
+
+          return;
+        }
+
+        const status = await resolveAccount({ userId, address, signal: controller.signal });
+
+        if (!isCurrent()) {
+          return;
+        }
+
+        setApiUserId(userId);
+
         const complete = status.registered && !!status.name.trim();
         // Route before publishing the unregistered state so its disconnect
         // guard cannot run before login() resumes (also covers restored sessions).
@@ -304,19 +327,24 @@ function LaunchpadProvider({
         }
       })
       .catch((error) => {
-        if (cancelled || !isCurrent() || isAbortError(error)) return;
+        if (!isCurrent() || isAbortError(error)) {
+          return;
+        }
         settleWaiter('error');
         setAccount({ status: 'error', message: statusCheckMessage(error) });
       });
     return () => {
-      cancelled = true;
-      if (session.current === token) session.current = null;
+      if (session.current === token) {
+        session.current = null;
+      }
+
+      setApiUserId(null);
       controller.abort();
       settleWaiter('cancelled');
     };
     // userIdentity is the stable key for blux.user; statusNonce re-runs the
     // check on retry.
-  }, [blux.isAuthenticated, userIdentity, selectedAddress, statusNonce, providerUserId, setAccount]);
+  }, [blux.isAuthenticated, userIdentity, selectedAddress, statusNonce, providerToken, setAccount]);
 
   // The registration-navigation guard only needs to survive until the route
   // actually changes.

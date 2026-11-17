@@ -17,105 +17,55 @@ function loadSource(filename, globals = {}) {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
   }).outputText;
   runInNewContext(output, {
-    module, exports: module.exports, Date, Error, JSON,
-    atob: (value) => Buffer.from(value, 'base64').toString('binary'),
+    module, exports: module.exports, AbortSignal, Error, JSON,
     require: (name) => name.startsWith('.') ? loadSource(resolve(dirname(path), `${name}.ts`), globals) : require(name),
     ...globals,
   }, { filename: path });
   return module.exports;
 }
 
-function token(payload) {
-  const encode = (value) => Buffer.from(JSON.stringify(value)).toString('base64url');
-  return `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode(payload)}.signature`;
-}
+const publicUserId = 'ekfvknkfkwsmaka322aa';
 
-function storageMock(entries = {}) {
-  const map = new Map(Object.entries(entries));
-  return {
-    getItem: (key) => (map.has(key) ? map.get(key) : null),
-    setItem: (key, value) => map.set(key, String(value)),
-    removeItem: (key) => map.delete(key),
-  };
-}
+test('uses the public ID from the authenticated user endpoint', async () => {
+  const signal = new AbortController().signal;
 
-function loadWithStorage(entries) {
-  return loadSource('auth-provider.ts', {
-    window: { localStorage: storageMock(entries) },
+  const provider = loadSource('auth-provider.ts', {
+    fetch: async (url, options) => {
+      assert.equal(url, 'https://api.blux.cc/users');
+      assert.equal(options.headers.Authorization, 'Bearer session-token');
+      assert.equal(options.redirect, 'error');
+      assert.equal(options.cache, 'no-store');
+
+      return Response.json({ result: { id: publicUserId, user_id: 787 } });
+    },
   });
-}
 
-test('returns null without a stored provider session', () => {
-  const provider = loadWithStorage({});
-  assert.equal(provider.getAuthProviderUserId(), null);
+  assert.equal(await provider.getAuthProviderUserId('session-token', signal), publicUserId);
 });
 
-test('extracts a numeric sub claim from the stored token', () => {
-  const provider = loadWithStorage({
-    __BLUX__JWT_STORE: token({ sub: 42 }),
-  });
-  assert.equal(provider.getAuthProviderUserId(), '42');
-});
+test('does not fall back to an internal ID or accept an expired session', async () => {
+  for (const response of [
+    Response.json({ result: { id: 787 } }),
+    Response.json({ result: { id: '787' } }),
+    Response.json({ result: { user_id: publicUserId } }),
+    Response.json({ error: 'Expired session' }, { status: 401 }),
+  ]) {
+    const provider = loadSource('auth-provider.ts', { fetch: async () => response });
 
-test('accepts public and legacy numeric string sub claims unchanged', () => {
-  for (const userId of ['42', 'ekfvknkfkwsmaka322aa']) {
-    const provider = loadWithStorage({
-      __BLUX__JWT_STORE: token({ sub: userId }),
-    });
-    assert.equal(provider.getAuthProviderUserId(), userId);
+    assert.equal(
+      await provider.getAuthProviderUserId('session-token', new AbortController().signal),
+      null,
+    );
   }
 });
 
-test('falls back to the persisted session record and other claim names', () => {
-  const provider = loadWithStorage({
-    __BLUX__RECENT_LOGIN_CONFIG: JSON.stringify({
-      authMethod: 'wallet',
-      authValue: 'rabet',
-      timestamp: Date.now(),
-      jwt: token({ user_id: 7 }),
-    }),
+test('does not treat an upstream outage as an unregistered account', async () => {
+  const provider = loadSource('auth-provider.ts', {
+    fetch: async () => new Response(null, { status: 503 }),
   });
-  assert.equal(provider.getAuthProviderUserId(), '7');
-});
 
-test('an empty session record token yields null', () => {
-  const provider = loadWithStorage({
-    __BLUX__RECENT_LOGIN_CONFIG: JSON.stringify({
-      authMethod: 'wallet', authValue: 'rabet', timestamp: Date.now(), jwt: '',
-    }),
-  });
-  assert.equal(provider.getAuthProviderUserId(), null);
-});
-
-test('a wallet address is never mistaken for a user id', () => {
-  const provider = loadWithStorage({
-    __BLUX__JWT_STORE: token({ sub: 'GDEMO6K4KQPR5H7NQOL6UPRTMPL4TE6CYXW2LP7SSQ3J2BQY7X2Q' }),
-  });
-  assert.equal(provider.getAuthProviderUserId(), null);
-});
-
-test('rejects non-positive or non-integer ids', () => {
-  for (const sub of [0, -3, 1.5, '0', 'invalid/id']) {
-    const provider = loadWithStorage({ __BLUX__JWT_STORE: token({ sub }) });
-    assert.equal(provider.getAuthProviderUserId(), null, `sub=${sub}`);
-  }
-});
-
-test('malformed tokens yield null', () => {
-  const provider = loadWithStorage({ __BLUX__JWT_STORE: 'not-a-token' });
-  assert.equal(provider.getAuthProviderUserId(), null);
-  const broken = loadWithStorage({ __BLUX__JWT_STORE: 'a.!!!.c' });
-  assert.equal(broken.getAuthProviderUserId(), null);
-});
-
-test('prefers sub over other claim names', () => {
-  const provider = loadWithStorage({
-    __BLUX__JWT_STORE: token({ sub: '42', id: 9 }),
-  });
-  assert.equal(provider.getAuthProviderUserId(), '42');
-});
-
-test('returns null outside the browser', () => {
-  const provider = loadSource('auth-provider.ts');
-  assert.equal(provider.getAuthProviderUserId(), null);
+  await assert.rejects(
+    provider.getAuthProviderUserId('session-token', new AbortController().signal),
+    /temporarily unavailable/,
+  );
 });

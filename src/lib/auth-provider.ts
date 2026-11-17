@@ -1,60 +1,36 @@
 import normalizeProviderUserId from './normalize-provider-user-id';
 
-const providerTokenStorageKey = '__BLUX__JWT_STORE';
-const providerSessionStorageKey = '__BLUX__RECENT_LOGIN_CONFIG';
-const userIdClaims = ['sub', 'user_id', 'userId', 'uid', 'id'] as const;
+const getAuthProviderUserId = async (token: string, signal: AbortSignal): Promise<string | null> => {
+  const response = await fetch('https://api.blux.cc/users', {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+    redirect: 'error',
+    signal: AbortSignal.any([signal, AbortSignal.timeout(15_000)]),
+  });
 
-// Blux public IDs and legacy numeric IDs are identifiers, not credentials.
-const getAuthProviderUserId = (): string | null => {
-  if (typeof window === 'undefined') {
+  if (response.status === 401 || response.status === 403 || response.status === 404) {
     return null;
   }
 
-  try {
-    let token = window.localStorage.getItem(providerTokenStorageKey);
+  if (!response.ok) {
+    throw new Error('Account verification is temporarily unavailable.');
+  }
 
-    if (!token) {
-      const record = window.localStorage.getItem(providerSessionStorageKey);
+  const payload: unknown = await response.json();
 
-      if (!record) {
-        return null;
-      }
+  if (!payload || typeof payload !== 'object' || !('result' in payload)) {
+    throw new Error('Invalid sign-in response.');
+  }
 
-      const session: unknown = JSON.parse(record);
+  const result = payload.result;
 
-      if (!session || typeof session !== 'object' || !('jwt' in session) || typeof session.jwt !== 'string') {
-        return null;
-      }
-
-      token = session.jwt;
-    }
-
-    const parts = token.split('.');
-
-    if (parts.length < 2 || !parts[1]) {
-      return null;
-    }
-
-    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
-    const payload: unknown = JSON.parse(atob(padded));
-
-    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-      return null;
-    }
-
-    for (const claim of userIdClaims) {
-      const userId = normalizeProviderUserId((payload as Record<string, unknown>)[claim]);
-
-      if (userId) {
-        return userId;
-      }
-    }
-
-    return null;
-  } catch {
+  if (!result || typeof result !== 'object' || !('id' in result) || typeof result.id !== 'string') {
     return null;
   }
+
+  const id = normalizeProviderUserId(result.id);
+
+  return id && !/^\d+$/.test(id) ? id : null;
 };
 
 export { getAuthProviderUserId };

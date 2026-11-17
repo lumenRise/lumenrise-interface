@@ -75,14 +75,14 @@ function loginHarness(outcome, { path, authenticated = false, saved, environment
     react: {
       useState: initial => {
         const index = stateIndex++;
-        return [index === 1 ? { identity: authenticated ? '42:wallet:wallet:owner' : null, value: account } : typeof initial === 'function' ? initial() : initial, value => phases.push(value)];
+        return [index === 1 ? { identity: authenticated ? 'wallet:wallet:owner' : null, value: account } : typeof initial === 'function' ? initial() : initial, value => phases.push(value)];
       },
       useRef: current => { const ref = { current }; refs.push(ref); return ref; },
       useEffect() {}, useLayoutEffect() {}, useEffectEvent: fn => fn, useCallback: fn => fn, useMemo: fn => fn(),
     },
     'react/jsx-runtime': { jsx, jsxs: jsx },
     'next/navigation': { useRouter: () => ({ push: value => pushes.push(value), replace: value => replacements.push(value) }), usePathname: () => h.window.location.pathname },
-    '@bluxcc/react': { useBlux: () => blux, networks: { testnet: {} } },
+    '@bluxcc/react': { getJwt: () => 'session-token', useBlux: () => blux, networks: { testnet: {} } },
     '@/lib/api/auth': {}, '@/lib/api/client': {}, '@/lib/auth-provider': { getAuthProviderUserId: () => '42' },
     '@/lib/auth-return': h.auth,
     '@/components/ui/toast': { useNotify: () => message => { throw new Error(message); } },
@@ -177,7 +177,7 @@ test('registration failures stay on the form without consuming the return page',
 
 function profileHarness({ update = async () => ({ identityId: 'idn_1', name: 'Updated name', avatarUrl: '/updated.webp' }), read = async () => ({ identityId: 'idn_1', name: 'Old name', avatarUrl: '/old.webp' }) } = {}) {
   const h = browser('/settings');
-  const identity = '42:wallet:wallet:owner';
+  const identity = 'wallet:wallet:owner';
   let snapshot = { identity, value: { status: 'registered', profile: { userId: '42', identityId: 'idn_1', name: 'Old name', avatarUrl: '/old.webp', addresses: ['owner'] } } };
   const refs = [], calls = [];
   let stateIndex = 0, reads = 0, deletes = 0;
@@ -193,7 +193,7 @@ function profileHarness({ update = async () => ({ identityId: 'idn_1', name: 'Up
     },
     'react/jsx-runtime': { jsx, jsxs: jsx },
     'next/navigation': { useRouter: () => ({ replace() {}, push() {} }), usePathname: () => '/settings' },
-    '@bluxcc/react': { useBlux: () => ({ isAuthenticated: true, user: { address: 'owner', authMethod: 'wallet', authValue: 'wallet' }, logout() {} }) },
+    '@bluxcc/react': { getJwt: () => 'session-token', useBlux: () => ({ isAuthenticated: true, user: { address: 'owner', authMethod: 'wallet', authValue: 'wallet' }, logout() {} }) },
     '@/lib/api/auth': {
       updateProfile: async input => { calls.push(input); return update(input); },
       getProfile: async () => { reads++; return read(); },

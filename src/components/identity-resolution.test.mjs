@@ -13,10 +13,11 @@ const deferred = () => {
 class ApiError extends Error {
   constructor(status, code = 'http') { super('Failed'); this.code = code; this.status = status; }
 }
+const publicUserId = 'ekfvknkfkwsmaka322aa';
 const profile = { registered: true, userId: '42', identityId: 'identity', name: 'Alice', avatarUrl: '/alice.png' };
 
 // Run the actual provider with persistent hooks and controllable async boundaries.
-function harness({ signedIn = true } = {}) {
+function harness({ signedIn = true, lookupUserId = async token => token === '87' ? publicUserId : token } = {}) {
   const slots = [], resolutions = [], registrations = [], pushes = [];
   let index, dirty = false, value, userId = '87', apiUserId, loginCalls = 0;
   let effects = [], layouts = [];
@@ -63,13 +64,13 @@ function harness({ signedIn = true } = {}) {
     react,
     'react/jsx-runtime': { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) },
     'next/navigation': { useRouter: () => router, usePathname: () => '/register' },
-    '@bluxcc/react': { useBlux: () => blux },
+    '@bluxcc/react': { useBlux: () => blux, getJwt: () => userId },
     '@/lib/api/auth': {
       resolveAccount: input => { const request = { ...deferred(), input }; resolutions.push(request); return request.promise; },
       registerAccount: input => { const request = { ...deferred(), input }; registrations.push(request); return request.promise; },
     },
     '@/lib/api/client': { ApiError, configureApi() {}, getApiUserId: () => apiUserId, setApiUserId: id => { apiUserId = id; }, isAbortError: error => error.name === 'AbortError' },
-    '@/lib/auth-provider': { getAuthProviderUserId: () => userId },
+    '@/lib/auth-provider': { getAuthProviderUserId: lookupUserId },
     '@/lib/auth-return': { saveAuthReturnTo() {}, consumeAuthReturnTo() {} },
     '@/components/ui/toast': { useNotify: () => notify },
     '@/lib/launchpad': { LaunchpadContext: { Provider: 'Provider' } },
@@ -104,18 +105,19 @@ test('existing and alternate Blux IDs use the resolved profile without registrat
   for (const id of ['42', '87']) {
     const h = harness();
     h.switchAccount(id);
+    await h.flush();
     assert.equal(h.value.loginPending, true);
     assert.equal(h.value.accountReady, false);
     const request = h.resolutions.at(-1);
-    assert.equal(request.input.userId, id);
+    assert.equal(request.input.userId, id === '87' ? publicUserId : id);
     assert.equal(request.input.address, 'GA');
     request.resolve(profile);
     await h.flush();
     assert.equal(h.value.accountReady, true);
-    assert.equal(h.value.account.profile.userId, id);
+    assert.equal(h.value.account.profile.userId, id === '87' ? publicUserId : id);
     assert.equal(h.value.account.profile.identityId, 'identity');
     assert.equal(h.value.account.profile.avatarUrl, '/alice.png');
-    assert.equal(h.apiUserId, id);
+    assert.equal(h.apiUserId, id === '87' ? publicUserId : id);
     assert.equal(h.registrations.length, 0);
     assert.equal(h.value.loginPending, false);
   }
@@ -124,8 +126,10 @@ test('existing and alternate Blux IDs use the resolved profile without registrat
 test('new wallets and incomplete existing names receive profile completion', async () => {
   for (const result of [{ registered: false }, { ...profile, name: '   ' }]) {
     const h = harness();
+    await h.flush();
     h.resolutions[0].resolve(result); await h.flush();
     assert.equal(h.value.account.status, 'unregistered');
+    assert.equal(h.apiUserId, publicUserId);
     const first = h.value.register({ name: 'New name' });
     assert.equal((await h.value.register({ name: 'Duplicate' })).ok, false);
     assert.equal(h.registrations.length, 1);
@@ -133,13 +137,14 @@ test('new wallets and incomplete existing names receive profile completion', asy
     h.registrations[0].resolve({ ...profile, name: 'New name', addresses: ['GA'] });
     assert.equal((await first).ok, true); await h.flush();
     assert.equal(h.value.account.profile.name, 'New name');
-    assert.equal(h.value.account.profile.userId, '87');
+    assert.equal(h.value.account.profile.userId, publicUserId);
   }
 });
 
 test('resolution failures show errors, block registration and allow retry', async () => {
   for (const status of [400, 401, 403, 409, 503]) {
     const h = harness();
+    await h.flush();
     h.resolutions[0].reject(new ApiError(status)); await h.flush();
     assert.equal(h.value.account.status, 'error');
     assert.equal((await h.value.register({ name: 'Alice' })).ok, false);
@@ -153,12 +158,15 @@ test('resolution failures show errors, block registration and allow retry', asyn
 
 test('switching accounts clears the previous profile immediately and ignores old resolution', async () => {
   const h = harness();
+  await h.flush();
   h.resolutions[0].resolve(profile); await h.flush();
   h.switchAccount('88', 'GB');
+  await h.flush();
   assert.equal(h.value.account.status, 'checking');
   assert.equal(h.value.account.profile, undefined);
   const pending = h.resolutions[1];
   h.switchAccount('99', 'GC');
+  await h.flush();
   assert.equal(pending.input.signal.aborted, true);
   h.resolutions[2].resolve({ ...profile, name: 'Carol' }); await h.flush();
   pending.resolve({ ...profile, name: 'Bob' }); await h.flush();
@@ -169,10 +177,12 @@ test('switching accounts clears the previous profile immediately and ignores old
 test('same-ID wallet changes and switching away and back invalidate pending registrations', async () => {
   for (const nextId of ['87', '88']) {
     const h = harness();
+    await h.flush();
     h.resolutions[0].resolve({ registered: false }); await h.flush();
     const pending = h.value.register({ name: 'Old account' });
     h.switchAccount(nextId, 'GB');
     h.switchAccount('87', 'GA');
+    await h.flush();
     h.resolutions.at(-1).resolve({ ...profile, name: 'Current account' }); await h.flush();
     h.registrations[0].resolve({ ...profile, name: 'Old account' });
     assert.equal((await pending).ok, false); await h.flush();
@@ -182,6 +192,7 @@ test('same-ID wallet changes and switching away and back invalidate pending regi
 
 test('logout immediately invalidates resolution even before the next render', async () => {
   const h = harness();
+  await h.flush();
   h.value.logout();
   h.resolutions[0].resolve(profile); await h.flush();
   assert.equal(h.value.account.status, 'signed-out');
@@ -190,7 +201,9 @@ test('logout immediately invalidates resolution even before the next render', as
 
 test('an obsolete failed resolution cannot replace the new account with an error', async () => {
   const h = harness();
+  await h.flush();
   h.switchAccount('88', 'GB');
+  await h.flush();
   h.resolutions[1].resolve(profile); await h.flush();
   h.resolutions[0].reject(new ApiError(409)); await h.flush();
   assert.equal(h.value.account.status, 'registered');
@@ -200,11 +213,12 @@ test('an obsolete failed resolution cannot replace the new account with an error
 test('registration network recovery resolves identity and never assumes success on a failed recheck', async () => {
   for (const succeeds of [true, false]) {
     const h = harness();
+    await h.flush();
     h.resolutions[0].resolve({ registered: false }); await h.flush();
     const pending = h.value.register({ name: 'Alice' });
     h.registrations[0].reject(new ApiError(undefined, 'timeout')); await h.flush();
     assert.equal(h.resolutions[1].input.address, 'GA');
-    assert.equal(h.resolutions[1].input.userId, '87');
+    assert.equal(h.resolutions[1].input.userId, publicUserId);
     if (succeeds) h.resolutions[1].resolve(profile);
     else h.resolutions[1].reject(new ApiError(503));
     assert.equal((await pending).ok, succeeds); await h.flush();
@@ -235,4 +249,17 @@ test('login stays pending through resolution and duplicate login calls do not re
   await pending; await h.flush();
   assert.equal(h.value.accountReady, true);
   assert.equal(h.value.loginPending, false);
+});
+
+test('a pending public ID lookup cannot start account resolution after logout', async () => {
+  const lookup = deferred();
+  const h = harness({ lookupUserId: () => lookup.promise });
+
+  h.value.logout();
+  lookup.resolve(publicUserId);
+  await h.flush();
+
+  assert.equal(h.value.account.status, 'signed-out');
+  assert.equal(h.resolutions.length, 0);
+  assert.equal(h.apiUserId, null);
 });
